@@ -32,8 +32,14 @@ public class AuthController {
 
     @PostMapping("/users")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('HEAD')")
     public UserDto createUser(@Valid @RequestBody CreateUserRequest request) {
         return authService.createUser(request);
     }
+    @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserDto registerUser(@Valid @RequestBody CreateUserRequest request) {
+        return authService.createUser(request);
+    }
+
 }
+

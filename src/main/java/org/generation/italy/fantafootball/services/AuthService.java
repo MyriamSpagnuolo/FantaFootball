@@ -65,16 +65,13 @@ public class AuthService {
             throw new ConflictException("username_unavailable", "Username already exists: " + request.username());
         }
 
-        Set<UserRole> roles = parseRoles(request.roles());
-        if (roles.isEmpty()) {
-            throw new BadRequestException("invalid_request", "At least one role is required");
-        }
+
 
         AppUser user = new AppUser();
         user.setUsername(request.username());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setEnabled(true);
-        user.setRoles(roles);
+        user.setRoles(Set.of(UserRole.USER));
 
         AppUser saved = appUserRepository.save(user);
         return new UserDto(
@@ -100,7 +97,7 @@ public class AuthService {
         try {
             return UserRole.valueOf(role);
         } catch (IllegalArgumentException ex) {
-            throw new BadRequestException("invalid_role", "Role must be STUDENT, TEACHER, or HEAD");
+            throw new BadRequestException("invalid_role", "Role must be ADMIN,USER");
         }
     }
 }

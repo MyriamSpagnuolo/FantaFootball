@@ -15,8 +15,6 @@ public record CreateUserRequest(
 
         @NotBlank
         @StrongPassword
-        String password,
+        String password
 
-        @NotEmpty
-        Set<@Pattern(regexp = "STUDENT|TEACHER|HEAD", flags = Pattern.Flag.CASE_INSENSITIVE, message = "must be STUDENT, TEACHER, or HEAD") String> roles
 ) {}
