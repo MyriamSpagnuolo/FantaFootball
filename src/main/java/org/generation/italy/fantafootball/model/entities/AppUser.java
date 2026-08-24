@@ -18,6 +18,7 @@ public class AppUser {
     @Column(name = "user_id")
     private Long id;
 
+
     @Column(nullable = false, unique = true, length = 80)
     private String username;
 
@@ -32,6 +33,8 @@ public class AppUser {
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)
     private Set<UserRole> roles = new HashSet<>();
+
+
 
 
     public AppUser() {}
