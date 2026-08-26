@@ -109,7 +109,9 @@ CREATE TABLE public.league_match (
     away_score numeric(5,2),
     home_goals integer,
     away_goals integer,
-    match_day timestamp without time zone NOT NULL
+    match_day timestamp without time zone NOT NULL,
+    matchday_id bigint NOT NULL,
+    round_number integer NOT NULL
 );
 
 
@@ -163,6 +165,30 @@ CREATE TABLE public.lineup_type (
 
 
 --
+-- Name: seq_matchday_id; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.seq_matchday_id
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: matchday; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.matchday (
+    id bigint DEFAULT nextval('public.seq_matchday_id'::regclass) NOT NULL,
+    number integer NOT NULL,
+    date date NOT NULL,
+    is_closed boolean DEFAULT false NOT NULL
+);
+
+
+--
 -- Name: seq_player_results_id; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -193,7 +219,8 @@ CREATE TABLE public.player_results (
     yellow_card integer NOT NULL,
     red_card boolean NOT NULL,
     real_team_name character varying NOT NULL,
-    real_team_shirt_num integer NOT NULL
+    real_team_shirt_num integer NOT NULL,
+    matchday_id bigint NOT NULL
 );
 
 
@@ -337,6 +364,14 @@ ALTER TABLE ONLY public.lineup_type
 
 
 --
+-- Name: matchday matchday_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.matchday
+    ADD CONSTRAINT matchday_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: app_user_roles pk_app_user_roles; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -398,6 +433,14 @@ ALTER TABLE ONLY public.league
 
 ALTER TABLE ONLY public.lineup
     ADD CONSTRAINT uq_lineup UNIQUE (team_id, league_match_id);
+
+
+--
+-- Name: matchday uq_matchday_number; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.matchday
+    ADD CONSTRAINT uq_matchday_number UNIQUE (number);
 
 
 --
@@ -488,11 +531,27 @@ ALTER TABLE ONLY public.league_match
 
 
 --
+-- Name: league_match fk_lm_matchday; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.league_match
+    ADD CONSTRAINT fk_lm_matchday FOREIGN KEY (matchday_id) REFERENCES public.matchday(id);
+
+
+--
 -- Name: lineup_player fk_lp_lineup; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.lineup_player
     ADD CONSTRAINT fk_lp_lineup FOREIGN KEY (lineup_id) REFERENCES public.lineup(id) ON DELETE CASCADE;
+
+
+--
+-- Name: player_results fk_player_results_matchday; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.player_results
+    ADD CONSTRAINT fk_player_results_matchday FOREIGN KEY (matchday_id) REFERENCES public.matchday(id);
 
 
 --

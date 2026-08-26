@@ -20,6 +20,8 @@ TRUNCATE TABLE
     lineup,
     lineup_player,
     lineup_type,
+    matchday,
+    player_results,
     team,
     team_player,
     trade
@@ -29,6 +31,8 @@ ALTER SEQUENCE seq_app_users_user_id RESTART WITH 1;
 ALTER SEQUENCE seq_league_id RESTART WITH 1;
 ALTER SEQUENCE seq_league_match_id RESTART WITH 1;
 ALTER SEQUENCE seq_lineup_id RESTART WITH 1;
+ALTER SEQUENCE seq_matchday_id RESTART WITH 1;
+ALTER SEQUENCE seq_player_results_id RESTART WITH 1;
 ALTER SEQUENCE seq_team_id RESTART WITH 1;
 ALTER SEQUENCE seq_team_player_id RESTART WITH 1;
 ALTER SEQUENCE seq_trade_id RESTART WITH 1;
@@ -107,23 +111,66 @@ INSERT INTO lineup_type (id, defender_num, midfielder_num, foward_num) VALUES
 (7, 5, 4, 1); -- 5-4-1
 
 -- ---------------------------------------------------------------------
--- league_match
--- Giornata 1 (23/08): gia' giocata, con punteggi. Atletico Fantacalcio riposa.
--- Giornata 2 (30/08): non ancora giocata (punteggi NULL). I Bomber riposa.
+-- matchday (giornate REALI di campionato, condivise da tutte le leghe)
+-- Numerate 3 e 4 apposta: dimostra che la giornata di una lega (round_number,
+-- che riparte da 1 alla nascita della lega) e' indipendente dalla giornata
+-- reale di campionato (matchday.number) da cui arrivano i player_results.
 -- ---------------------------------------------------------------------
-INSERT INTO league_match (league_id, home_team_id, away_team_id, home_score, away_score, home_goals, away_goals, match_day) VALUES
+INSERT INTO matchday (number, date, is_closed) VALUES
+(3, DATE '2026-08-23', true),
+(4, DATE '2026-08-30', false);
+
+-- ---------------------------------------------------------------------
+-- player_results: dati "arrivati dal servizio esterno" per la giornata reale
+-- gia' chiusa (matchday.number = 3). Corrispondono 1:1, su
+-- (name, surname, real_team_name, real_team_shirt_num), ai team_player gia'
+-- in rosa: e' cosi' che si simula l'ingestione di risultati esterni che poi
+-- vengono agganciati ai giocatori posseduti dalle squadre fantacalcistiche.
+-- clean_sheet e' lasciato NULL per centrocampisti/attaccanti: e' una statistica
+-- che ha senso solo per portieri/difensori.
+-- ---------------------------------------------------------------------
+INSERT INTO player_results (matchday_id, name, surname, real_team_name, real_team_shirt_num, rating, goal_num, goal_conceded, autogoal_num, assist_num, penalty_saved, penalty_failed, clean_sheet, yellow_card, red_card) VALUES
+-- Portieri
+((SELECT id FROM matchday WHERE number = 3), 'Alessandro', 'Ferri',      'Juventus',   1,  6.5, 0, 1, 0, 0, 1, 0, false, 0, false),
+((SELECT id FROM matchday WHERE number = 3), 'Federico',   'Moretti',    'Roma',       1,  6.0, 0, 2, 0, 0, 0, 0, false, 0, false),
+((SELECT id FROM matchday WHERE number = 3), 'Andrea',     'Marino',     'Lazio',      1,  7.0, 0, 0, 0, 0, 0, 0, true,  0, false),
+((SELECT id FROM matchday WHERE number = 3), 'Emanuele',   'Longo',      'Napoli',     1,  6.0, 0, 1, 0, 0, 0, 0, false, 1, false),
+-- Difensori
+((SELECT id FROM matchday WHERE number = 3), 'Davide',     'Conti',      'Inter',      4,  6.5, 0, 0, 0, 1, 0, 0, false, 0, false),
+((SELECT id FROM matchday WHERE number = 3), 'Lorenzo',    'Bruno',      'Atalanta',   5,  6.0, 1, 0, 0, 0, 0, 0, false, 1, false),
+((SELECT id FROM matchday WHERE number = 3), 'Stefano',    'Greco',      'Torino',     3,  5.5, 0, 0, 1, 0, 0, 0, true,  0, false),
+((SELECT id FROM matchday WHERE number = 3), 'Marco',      'Villa',      'Juventus',   22, 6.0, 0, 0, 0, 0, 0, 0, false, 0, false),
+((SELECT id FROM matchday WHERE number = 3), 'Luca',       'Rinaldi',    'Inter',      13, 6.5, 0, 0, 0, 1, 0, 0, false, 0, false),
+((SELECT id FROM matchday WHERE number = 3), 'Tommaso',    'Gatti',      'Roma',       6,  5.5, 0, 0, 0, 0, 0, 0, false, 1, true),
+-- Centrocampisti
+((SELECT id FROM matchday WHERE number = 3), 'Matteo',     'Galli',      'Milan',      8,  5.0, 0, 0, 0, 0, 0, 0, NULL,  0, false),
+((SELECT id FROM matchday WHERE number = 3), 'Nicolo',     'Fontana',    'Fiorentina', 10, 7.0, 1, 0, 0, 1, 0, 0, NULL,  0, false),
+((SELECT id FROM matchday WHERE number = 3), 'Riccardo',   'Barbieri',   'Bologna',    7,  6.5, 0, 0, 0, 1, 0, 0, NULL,  0, false),
+((SELECT id FROM matchday WHERE number = 3), 'Filippo',    'De Angelis', 'Atalanta',   17, 6.0, 0, 0, 0, 0, 0, 1, NULL,  1, false),
+-- Attaccanti
+((SELECT id FROM matchday WHERE number = 3), 'Simone',     'Riva',       'Napoli',     9,  8.0, 2, 0, 0, 0, 0, 0, NULL,  0, false),
+((SELECT id FROM matchday WHERE number = 3), 'Gabriele',   'Costa',      'Milan',      11, 7.0, 1, 0, 0, 0, 0, 0, NULL,  0, false);
+
+-- ---------------------------------------------------------------------
+-- league_match
+-- Giornata di lega 1 = giornata reale 3 (23/08): gia' giocata, con punteggi.
+--   Atletico Fantacalcio riposa.
+-- Giornata di lega 2 = giornata reale 4 (30/08): non ancora giocata (punteggi NULL).
+--   I Bomber riposa.
+-- ---------------------------------------------------------------------
+INSERT INTO league_match (league_id, home_team_id, away_team_id, home_score, away_score, home_goals, away_goals, match_day, matchday_id, round_number) VALUES
 ((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
  (SELECT id FROM team WHERE name = 'I Bomber'), (SELECT id FROM team WHERE name = 'Real Fanta'),
- 68.5, 54.0, 2, 1, TIMESTAMP '2026-08-23 15:00:00'),
+ 68.5, 54.0, 2, 1, TIMESTAMP '2026-08-23 15:00:00', (SELECT id FROM matchday WHERE number = 3), 1),
 ((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
  (SELECT id FROM team WHERE name = 'Gli Invincibili'), (SELECT id FROM team WHERE name = 'FC Imbattibili'),
- 45.0, 72.5, 0, 3, TIMESTAMP '2026-08-23 15:00:00'),
+ 45.0, 72.5, 0, 3, TIMESTAMP '2026-08-23 15:00:00', (SELECT id FROM matchday WHERE number = 3), 1),
 ((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
  (SELECT id FROM team WHERE name = 'Real Fanta'), (SELECT id FROM team WHERE name = 'Gli Invincibili'),
- NULL, NULL, NULL, NULL, TIMESTAMP '2026-08-30 15:00:00'),
+ NULL, NULL, NULL, NULL, TIMESTAMP '2026-08-30 15:00:00', (SELECT id FROM matchday WHERE number = 4), 2),
 ((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
  (SELECT id FROM team WHERE name = 'FC Imbattibili'), (SELECT id FROM team WHERE name = 'Atletico Fantacalcio'),
- NULL, NULL, NULL, NULL, TIMESTAMP '2026-08-30 15:00:00');
+ NULL, NULL, NULL, NULL, TIMESTAMP '2026-08-30 15:00:00', (SELECT id FROM matchday WHERE number = 4), 2);
 
 -- ---------------------------------------------------------------------
 -- lineup (solo per le partite gia' giocate di giornata 1)
