@@ -191,70 +191,48 @@ INSERT INTO lineup (team_id, league_match_id, is_defensive, lineup_type_id) VALU
 
 -- ---------------------------------------------------------------------
 -- lineup_player
--- NB: player_id non e' una foreign key verso team_player (colonna libera
--- rimasta dal vecchio modello): sono valori segnaposto, non collegati
--- alla rosa reale in team_player.
+-- player_id e' una vera foreign key verso team_player(id): ogni riga
+-- schiera un giocatore realmente posseduto dalla squadra in quella lineup.
+-- La rosa di test e' volutamente piccola (3-4 giocatori a squadra), quindi
+-- qui schieriamo tutti i team_player disponibili invece di un 11 completo.
 -- ---------------------------------------------------------------------
--- I Bomber: 11 titolari + 2 riserve
+-- I Bomber: tutta la rosa disponibile (4 giocatori)
 INSERT INTO lineup_player (lineup_id, player_id, starter, position) VALUES
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')), 101, true, 'P'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')), 102, true, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')), 103, true, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')), 104, true, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')), 105, true, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')), 106, true, 'C'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')), 107, true, 'C'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')), 108, true, 'C'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')), 109, true, 'C'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')), 110, true, 'A'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')), 111, true, 'A'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')), 112, false, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')), 113, false, 'A');
+((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')),
+ (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber') AND name = 'Alessandro' AND surname = 'Ferri'), true, 'P'),
+((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')),
+ (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber') AND name = 'Davide' AND surname = 'Conti'), true, 'D'),
+((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')),
+ (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber') AND name = 'Matteo' AND surname = 'Galli'), true, 'C'),
+((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')),
+ (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber') AND name = 'Simone' AND surname = 'Riva'), true, 'A');
 
--- Real Fanta: 11 titolari (5-3-2), nessuna riserva
+-- Real Fanta: tutta la rosa disponibile (3 giocatori)
 INSERT INTO lineup_player (lineup_id, player_id, starter, position) VALUES
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta')), 201, true, 'P'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta')), 202, true, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta')), 203, true, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta')), 204, true, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta')), 205, true, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta')), 206, true, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta')), 207, true, 'C'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta')), 208, true, 'C'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta')), 209, true, 'C'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta')), 210, true, 'A'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta')), 211, true, 'A');
+((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta')),
+ (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta') AND name = 'Federico' AND surname = 'Moretti'), true, 'P'),
+((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta')),
+ (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta') AND name = 'Lorenzo' AND surname = 'Bruno'), true, 'D'),
+((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta')),
+ (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta') AND name = 'Nicolo' AND surname = 'Fontana'), true, 'C');
 
--- Gli Invincibili: 11 titolari (4-3-3)
+-- Gli Invincibili: tutta la rosa disponibile (3 giocatori)
 INSERT INTO lineup_player (lineup_id, player_id, starter, position) VALUES
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili')), 301, true, 'P'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili')), 302, true, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili')), 303, true, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili')), 304, true, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili')), 305, true, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili')), 306, true, 'C'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili')), 307, true, 'C'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili')), 308, true, 'C'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili')), 309, true, 'A'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili')), 310, true, 'A'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili')), 311, true, 'A');
+((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili')),
+ (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili') AND name = 'Andrea' AND surname = 'Marino'), true, 'P'),
+((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili')),
+ (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili') AND name = 'Stefano' AND surname = 'Greco'), true, 'D'),
+((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili')),
+ (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili') AND name = 'Riccardo' AND surname = 'Barbieri'), true, 'C');
 
--- FC Imbattibili: 11 titolari (3-4-3) + 3 riserve
+-- FC Imbattibili: 2 titolari + 1 riserva (3 giocatori disponibili)
 INSERT INTO lineup_player (lineup_id, player_id, starter, position) VALUES
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')), 401, true, 'P'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')), 402, true, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')), 403, true, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')), 404, true, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')), 405, true, 'C'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')), 406, true, 'C'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')), 407, true, 'C'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')), 408, true, 'C'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')), 409, true, 'A'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')), 410, true, 'A'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')), 411, true, 'A'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')), 412, false, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')), 413, false, 'C'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')), 414, false, 'A');
+((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')),
+ (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili') AND name = 'Marco' AND surname = 'Villa'), true, 'P'),
+((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')),
+ (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili') AND name = 'Gabriele' AND surname = 'Costa'), true, 'A'),
+((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')),
+ (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili') AND name = 'Luca' AND surname = 'Rinaldi'), false, 'D');
 
 -- ---------------------------------------------------------------------
 -- trade: una per stato (PENDING / ACCEPTED / REJECTED), con importi che
