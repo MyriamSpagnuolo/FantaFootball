@@ -42,6 +42,11 @@ public class MatchdayCalculationService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public int calculateLineupGoals(Long lineupId) {
+        return GoalsCalculator.calculateGoals(calculateLineupScore(lineupId));
+    }
+
     private PlayerMatchStats toMatchStats(Lineup lineup, LineupPlayer lineupPlayer) {
         var player = lineupPlayer.getTeamPlayer();
         PlayerResult result = playerResultRepository
