@@ -146,7 +146,7 @@ CREATE TABLE public.lineup (
 
 CREATE TABLE public.lineup_player (
     lineup_id bigint NOT NULL,
-    player_id integer NOT NULL,
+    player_id bigint NOT NULL,
     starter boolean DEFAULT true NOT NULL,
     "position" character varying(20)
 );
@@ -544,6 +544,14 @@ ALTER TABLE ONLY public.league_match
 
 ALTER TABLE ONLY public.lineup_player
     ADD CONSTRAINT fk_lp_lineup FOREIGN KEY (lineup_id) REFERENCES public.lineup(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lineup_player fk_lp_teamplayer; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lineup_player
+    ADD CONSTRAINT fk_lp_teamplayer FOREIGN KEY (player_id) REFERENCES public.team_player(id);
 
 
 --
