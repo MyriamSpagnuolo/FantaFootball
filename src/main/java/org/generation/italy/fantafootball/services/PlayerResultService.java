@@ -29,7 +29,7 @@ public class PlayerResultService {
     public List<PlayerResult> createAll(List<PlayerResultDto> requests) {
 
         List<PlayerResult> results = requests.stream()
-                .map(this::toEntity)
+                .map(this::toEntity) // method reference di: .map(request -> this.toEntity(request))
                 .toList();
 
         return playerResultRepository.saveAll(results);

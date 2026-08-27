@@ -19,19 +19,18 @@ public class PlayerResultController {
         this.playerResultService = playerResultService;
     }
 
-    // L'annotazione "RequestBody" dice a Spring di prendere il contenuto JSON del body della richiesta HTTP
+    // L'annotazione "RequestBody" dice a Spring di prendere il contenuto del singolo oggetto JSON del body della richiesta HTTP
     // e convertilo in un oggetto Java (Spring crea PlayerResultDto request).
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping // viene utilizzato il percorso base del ontroller, quindi: @RequestMapping("/api/player-results")
+    @ResponseStatus(HttpStatus.CREATED) // HTTP 201 Created
     public PlayerResult create(@RequestBody PlayerResultDto request) {
         return playerResultService.create(request);
     }
 
+    // Questa volta @RequestBody deve convertire un array di JSON.
     @PostMapping("/batch")
     @ResponseStatus(HttpStatus.CREATED)
-    public List<PlayerResult> createAll(
-            @RequestBody List<PlayerResultDto> requests) {
-
+    public List<PlayerResult> createAll(@RequestBody List<PlayerResultDto> requests) {
         return playerResultService.createAll(requests);
     }
 }
