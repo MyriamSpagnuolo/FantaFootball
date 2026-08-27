@@ -6,8 +6,11 @@ import org.generation.italy.fantafootball.model.repositories.PlayerResultReposit
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class PlayerResultService {
+
     private final PlayerResultRepository playerResultRepository;
 
     public PlayerResultService(PlayerResultRepository playerResultRepository) {
@@ -17,26 +20,45 @@ public class PlayerResultService {
     @Transactional
     public PlayerResult create(PlayerResultDto request) {
 
-        // creiamo il "result" che sarebbe l'entity che Hibernate potrà salvare
+        PlayerResult result = toEntity(request);
+
+        return playerResultRepository.save(result);
+    }
+
+    @Transactional
+    public List<PlayerResult> createAll(List<PlayerResultDto> requests) {
+
+        List<PlayerResult> results = requests.stream()
+                .map(this::toEntity)
+                .toList();
+
+        return playerResultRepository.saveAll(results);
+    }
+
+    private PlayerResult toEntity(PlayerResultDto request) {
+
         PlayerResult result = new PlayerResult();
 
-        // Poi qui facciamo il mapping per tutti i campi:
-        result.setName(request.name()); // request.name()  ───→  result.name
+        result.setName(request.name());
         result.setSurname(request.surname());
         result.setRealTeamName(request.realTeamName());
         result.setRealTeamShirtNum(request.realTeamShirtNum());
+
         result.setRating(request.rating());
+
         result.setGoalNum(request.goalNum());
         result.setGoalConceded(request.goalConceded());
         result.setAutogoalNum(request.autogoalNum());
         result.setAssistNum(request.assistNum());
+
         result.setPenaltySaved(request.penaltySaved());
         result.setPenaltyFailed(request.penaltyFailed());
+
         result.setCleanSheet(request.cleanSheet());
+
         result.setYellowCard(request.yellowCard());
         result.setRedCard(request.redCard());
 
-        // Spring Data JPA salva l'entity nella tabella player_results
-        return playerResultRepository.save(result);
+        return result;
     }
 }

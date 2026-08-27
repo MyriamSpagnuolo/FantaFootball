@@ -2,6 +2,7 @@ package org.generation.italy.fantafootball.model.dto;
 
 import java.math.BigDecimal;
 
+// Dentro PlayerResultDto non mettiamo id, perché l'id di PlayerResult viene generato quando salviamo la entity.
 public record PlayerResultDto (
         String name,
         String surname,
