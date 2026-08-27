@@ -13,5 +13,10 @@ public interface TeamPlayerRepository extends JpaRepository<TeamPlayer,Long> {
     // 2. Verifica esistenza per il vincolo UNIQUE (name, surname, real_team_name, real_team_shirt_num)
     boolean existsByNameAndSurnameAndRealTeamNameAndRealTeamShirtNum(String name, String surname, String realTeamName,
                                                                      Integer realTeamShirtNum);
+
+    // Per l'update: esclude il record che si sta modificando dal controllo UNIQUE
+    boolean existsByNameAndSurnameAndRealTeamNameAndRealTeamShirtNumAndIdNot(
+            String name, String surname, String realTeamName, Integer realTeamShirtNum, Long id);
+
 }
 

@@ -6,8 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface TeamRepository extends JpaRepository<Team,Long> {
-    boolean existsByNameandLeagueId(String name, Long leagueId);
-    List<Team> findAllTeamByLeagueId(Long leagueId);
+    boolean existsByNameAndLeagueId(String name, Long leagueId);
+    List<Team> findAllByLeagueId(Long leagueId);
     long countByLeagueId(Long leagueId);
 
 }
