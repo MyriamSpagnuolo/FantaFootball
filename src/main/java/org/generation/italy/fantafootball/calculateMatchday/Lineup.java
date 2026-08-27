@@ -11,6 +11,14 @@ public class Lineup {
     private List<Player> forwards;
     private boolean isDefensive;
 
+    public List<Player> getMidfielders() {
+        return midfielders;
+    }
+
+    public List<Player> getForwards() {
+        return forwards;
+    }
+
     public boolean getIsDefensive() {
         return isDefensive;
     }

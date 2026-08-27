@@ -1,6 +1,7 @@
 package org.generation.italy.fantafootball.calculateMatchday;
 
 public class PlayerMatchStats {
+    private Player player;
     private Long playerId;
     private double vote;
     private int goals;
