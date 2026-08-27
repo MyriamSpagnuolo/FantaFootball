@@ -7,16 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface TeamPlayerRepository extends JpaRepository<TeamPlayer,Long> {
-    // 1. Tutti i giocatori di una squadra
+    // 1. serve per trovare i giocatori nella squadra prima di rimuoverli
     List<TeamPlayer> findAllByTeamId(Long teamId);
-
-    // 2. Verifica esistenza per il vincolo UNIQUE (name, surname, real_team_name, real_team_shirt_num)
-    boolean existsByNameAndSurnameAndRealTeamNameAndRealTeamShirtNum(String name, String surname, String realTeamName,
-                                                                     Integer realTeamShirtNum);
-
-    // Per l'update: esclude il record che si sta modificando dal controllo UNIQUE
-    boolean existsByNameAndSurnameAndRealTeamNameAndRealTeamShirtNumAndIdNot(
-            String name, String surname, String realTeamName, Integer realTeamShirtNum, Long id);
 
 }
 
