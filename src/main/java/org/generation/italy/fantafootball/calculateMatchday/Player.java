@@ -7,7 +7,11 @@ public class Player {
     private int shirtNumber;
     private double matchdayRating;
     private Role role;
+    private double vote;
 
+    public double getVote() {
+        return vote;
+    }
 
     public Role getRole(){
         return role;

@@ -9,8 +9,19 @@ public class Lineup {
     private List<Player> defenders;
     private List<Player> midfielders;
     private List<Player> forwards;
+    private boolean isDefensive;
 
+    public boolean getIsDefensive() {
+        return isDefensive;
+    }
 
+    public Player getGoalkeeper() {
+        return goalkeeper;
+    }
+
+    public List<Player> getDefenders() {
+        return defenders;
+    }
 
     static Lineup insertMod(FormationType mod) {
         Lineup lineup = new Lineup();
@@ -18,6 +29,18 @@ public class Lineup {
         return lineup;
 
     }
+
+
+    static void verifyModDef(Lineup lineup){
+        if (lineup.defenders.size()>=4){
+            lineup.isDefensive =true;
+        }
+        else {
+            lineup.isDefensive=false;
+        }
+    }
+
+
 
     static Lineup insertPlayer(Lineup lineup, Player player){
         switch(player.getRole()) {
