@@ -10,13 +10,12 @@ public class LineupPlayerId implements Serializable {
 
     private Long lineupId;
 
-    // No local "player" table; players are sourced externally.
-    private Integer playerId;
+    private Long playerId;
 
     public LineupPlayerId() {
     }
 
-    public LineupPlayerId(Long lineupId, Integer playerId) {
+    public LineupPlayerId(Long lineupId, Long playerId) {
         this.lineupId = lineupId;
         this.playerId = playerId;
     }
@@ -29,11 +28,11 @@ public class LineupPlayerId implements Serializable {
         this.lineupId = lineupId;
     }
 
-    public Integer getPlayerId() {
+    public Long getPlayerId() {
         return playerId;
     }
 
-    public void setPlayerId(Integer playerId) {
+    public void setPlayerId(Long playerId) {
         this.playerId = playerId;
     }
 

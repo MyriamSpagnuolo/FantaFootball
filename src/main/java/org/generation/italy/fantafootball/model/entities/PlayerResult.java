@@ -34,6 +34,10 @@ public class PlayerResult {
     @Column(name = "real_team_shirt_num", nullable = false)
     private int realTeamShirtNum;
 
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "matchday_id", nullable = false)
+    private Matchday matchday;
+
     @Column(name = "rating")
     private BigDecimal rating;
 
@@ -101,6 +105,14 @@ public class PlayerResult {
 
     public void setRealTeamShirtNum(int realTeamShirtNum) {
         this.realTeamShirtNum = realTeamShirtNum;
+    }
+
+    public Matchday getMatchday() {
+        return matchday;
+    }
+
+    public void setMatchday(Matchday matchday) {
+        this.matchday = matchday;
     }
 
     public BigDecimal getRating() {
