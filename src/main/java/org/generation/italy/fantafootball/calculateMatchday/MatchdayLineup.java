@@ -1,26 +1,47 @@
 package org.generation.italy.fantafootball.calculateMatchday;
 
+import org.generation.italy.fantafootball.model.entities.Lineup;
+
 import java.util.List;
 
 public class MatchdayLineup {
-    private PlayerMatchStats goalkeeper;
-    private List<PlayerMatchStats> defenders;
-    private List<PlayerMatchStats> midfielders;
-    private List<PlayerMatchStats> forwards;
+    private final Lineup lineup;
+    private final List<PlayerMatchStats> players;
+
+    public MatchdayLineup(Lineup lineup, List<PlayerMatchStats> players) {
+        this.lineup = lineup;
+        this.players = List.copyOf(players);
+    }
+
+    public Lineup getLineup() {
+        return lineup;
+    }
+
+    public List<PlayerMatchStats> getPlayers() {
+        return players;
+    }
 
     public PlayerMatchStats getGoalkeeper() {
-        return goalkeeper;
+        return players.stream()
+                .filter(p -> isPosition(p, "P"))
+                .filter(p -> p.getLineupPlayer().isStarter())
+                .findFirst()
+                .orElse(null);
     }
 
     public List<PlayerMatchStats> getDefenders() {
-        return defenders;
+        return players.stream().filter(p -> isPosition(p, "D")).toList();
     }
 
     public List<PlayerMatchStats> getMidfielders() {
-        return midfielders;
+        return players.stream().filter(p -> isPosition(p, "C")).toList();
     }
 
     public List<PlayerMatchStats> getForwards() {
-        return forwards;
+        return players.stream().filter(p -> isPosition(p, "A")).toList();
+    }
+
+    private boolean isPosition(PlayerMatchStats player, String expected) {
+        return expected.equalsIgnoreCase(player.getLineupPlayer().getPosition());
     }
 }

@@ -2,6 +2,9 @@ package org.generation.italy.fantafootball.model.entities;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "lineup", uniqueConstraints = @UniqueConstraint(name = "uq_lineup", columnNames = {"team_id", "league_match_id"}))
 public class Lineup {
@@ -30,6 +33,9 @@ public class Lineup {
 
     @Column(name = "is_defensive", nullable = false)
     private boolean defensive;
+
+    @OneToMany(mappedBy = "lineup", fetch = FetchType.LAZY)
+    private List<LineupPlayer> players = new ArrayList<>();
 
     public Lineup() {
     }
@@ -75,5 +81,19 @@ public class Lineup {
 
     public void setDefensive(boolean defensive) {
         this.defensive = defensive;
+    }
+
+    public List<LineupPlayer> getPlayers() {
+        return players;
+    }
+
+    public void addPlayer(LineupPlayer player) {
+        players.add(player);
+        player.setLineup(this);
+    }
+
+    public void removePlayer(LineupPlayer player) {
+        players.remove(player);
+        player.setLineup(null);
     }
 }

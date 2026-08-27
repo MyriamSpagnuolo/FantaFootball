@@ -1,22 +1,51 @@
 package org.generation.italy.fantafootball.calculateMatchday;
 
+import org.generation.italy.fantafootball.model.entities.LineupPlayer;
+import org.generation.italy.fantafootball.model.entities.PlayerResult;
+import org.generation.italy.fantafootball.model.entities.TeamPlayer;
+
 public class PlayerMatchStats {
-    private Player player;
-    private Long playerId;
-    private double vote;
-    private int goals;
-    private int goalConceded;
-    private int autogoal;
-    private int assists;
-    private int penaltySaved;
-    private int penaltyFailed;
-    private int yellowCards;
-    private boolean redCards;
-    private boolean cleansheet;
+    private final TeamPlayer player;
+    private final LineupPlayer lineupPlayer;
+    private final PlayerResult result;
 
-    static double calculateFantaRatingPlayer(PlayerMatchStats player) {
+    public PlayerMatchStats(LineupPlayer lineupPlayer, PlayerResult result) {
+        if (lineupPlayer == null || lineupPlayer.getTeamPlayer() == null) {
+            throw new IllegalArgumentException("A lineup player is required");
+        }
+        if (result == null) {
+            throw new IllegalArgumentException("A player result is required");
+        }
+        this.lineupPlayer = lineupPlayer;
+        this.player = lineupPlayer.getTeamPlayer();
+        this.result = result;
+    }
 
-        return player.vote+ 3*player.goals- player.autogoal+ player.assists+ 3*player.penaltySaved-
-               3*player.penaltyFailed -0.5* player.yellowCards- (player.redCards? 1:0) + (player.cleansheet? 1:0);
+    public TeamPlayer getPlayer() {
+        return player;
+    }
+
+    public LineupPlayer getLineupPlayer() {
+        return lineupPlayer;
+    }
+
+    public PlayerResult getResult() {
+        return result;
+    }
+
+    public double getVote() {
+        return result.getRating() == null ? 0.0 : result.getRating().doubleValue();
+    }
+
+    public double calculateFantaRating() {
+        return getVote()
+                + 3 * result.getGoalNum()
+                - result.getAutogoalNum()
+                + result.getAssistNum()
+                + 3 * result.getPenaltySaved()
+                - 3 * result.getPenaltyFailed()
+                - 0.5 * result.getYellowCard()
+                - (result.isRedCard() ? 1 : 0)
+                + (Boolean.TRUE.equals(result.getCleanSheet()) ? 1 : 0);
     }
 }

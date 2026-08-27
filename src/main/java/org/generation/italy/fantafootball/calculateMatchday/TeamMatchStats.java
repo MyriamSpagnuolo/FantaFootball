@@ -3,84 +3,34 @@ package org.generation.italy.fantafootball.calculateMatchday;
 import java.util.Comparator;
 import java.util.List;
 
-import static org.generation.italy.fantafootball.calculateMatchday.Lineup.verifyModDef;
-import static org.generation.italy.fantafootball.calculateMatchday.PlayerMatchStats.calculateFantaRatingPlayer;
-
 public class TeamMatchStats {
-    private Lineup lineup;
-    private double teamRating;
+    public double calculateFantaRatingLineup(MatchdayLineup lineup) {
+        double total = lineup.getPlayers().stream()
+                .filter(player -> player.getLineupPlayer().isStarter())
+                .mapToDouble(PlayerMatchStats::calculateFantaRating)
+                .sum();
 
-
-
-
-    static int calculateModBonus(Lineup lineup) {
-        verifyModDef(lineup);
-        List<Player> defenders = lineup.getDefenders();
-
-        defenders.sort(Comparator.comparing(Player::getVote).reversed());
-
-        double sum = 0;
-
-        for (int i = 0; i < 3; i++) {
-            sum += defenders.get(i).getVote();
-        }
-
-        double avg= (sum+lineup.getGoalkeeper().getVote()) / 4;
-        int bonus;
-
-        if (avg >= 7) {
-            bonus = 6;
-        } else if (avg >= 6.5) {
-            bonus = 3;
-        } else if (avg >= 6) {
-            bonus = 1;
-        } else {
-            bonus = 0;
-        }
-        return bonus;
-
+        return total + calculateModBonus(lineup);
     }
 
-    /*static double calculateFantaRatingLineup(Lineup lineup) {
+    public int calculateModBonus(MatchdayLineup lineup) {
+        List<PlayerMatchStats> defenders = lineup.getDefenders().stream()
+                .filter(player -> player.getLineupPlayer().isStarter())
+                .sorted(Comparator.comparing(PlayerMatchStats::getVote).reversed())
+                .toList();
+        PlayerMatchStats goalkeeper = lineup.getGoalkeeper();
 
-        double total = 0;
-
-        total += calculateFantaRatingPlayer(goalKeaperStats);
-
-        for (Player player : lineup.getDefenders()) {
-
-            total += calculateFantaRatingPlayer(player);
+        // Il modificatore esistente richiede portiere e almeno tre difensori.
+        if (goalkeeper == null || defenders.size() < 3) {
+            return 0;
         }
 
-        for (Player player : lineup.getMidfielders()) {
-            total += calculateFantaRatingPlayer(player);
-        }
+        double sum = defenders.stream().limit(3).mapToDouble(PlayerMatchStats::getVote).sum();
+        double average = (sum + goalkeeper.getVote()) / 4;
 
-        for (Player player : lineup.getForwards()) {
-            total += calculateFantaRatingPlayer(player);
-        }
-
-        return total;
-    }*/
-    static double calculateFantaRatingLineup(MatchdayLineup lineup, Lineup lineup2) {
-        double total = 0;
-
-        total += calculateFantaRatingPlayer(lineup.getGoalkeeper());
-
-        for (PlayerMatchStats player : lineup.getDefenders()) {
-            total += calculateFantaRatingPlayer(player);
-        }
-
-        for (PlayerMatchStats player : lineup.getMidfielders()) {
-            total += calculateFantaRatingPlayer(player);
-        }
-
-        for (PlayerMatchStats player : lineup.getForwards()) {
-            total += calculateFantaRatingPlayer(player);
-        }
-
-        total += calculateModBonus(lineup2);
-
-        return total;
+        if (average >= 7) return 6;
+        if (average >= 6.5) return 3;
+        if (average >= 6) return 1;
+        return 0;
     }
 }
