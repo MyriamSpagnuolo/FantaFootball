@@ -97,7 +97,7 @@ class LeagueMatchServiceTest {
         when(leagueMatchRepository.existsByLeagueId(1L)).thenReturn(false);
 
         List<Team> teams = List.of(teamA, teamB, teamC);
-        when(teamRepository.findByLeagueId(1L)).thenReturn(teams);
+        when(teamRepository.findAllTeamByLeagueId(1L)).thenReturn(teams);
 
         Matchday matchday1 = new Matchday(1, LocalDate.of(2026, 9, 1));
         Matchday matchday2 = new Matchday(2, LocalDate.of(2026, 9, 8));

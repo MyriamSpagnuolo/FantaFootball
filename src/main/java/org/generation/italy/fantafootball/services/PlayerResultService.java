@@ -1,7 +1,10 @@
 package org.generation.italy.fantafootball.services;
 
 import org.generation.italy.fantafootball.model.dto.PlayerResultDto;
+import org.generation.italy.fantafootball.model.entities.Player;
 import org.generation.italy.fantafootball.model.entities.PlayerResult;
+import org.generation.italy.fantafootball.model.exceptions.NotFoundException;
+import org.generation.italy.fantafootball.model.repositories.PlayerRepository;
 import org.generation.italy.fantafootball.model.repositories.PlayerResultRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,9 +15,11 @@ import java.util.List;
 public class PlayerResultService {
 
     private final PlayerResultRepository playerResultRepository;
+    private final PlayerRepository playerRepository;
 
-    public PlayerResultService(PlayerResultRepository playerResultRepository) {
+    public PlayerResultService(PlayerResultRepository playerResultRepository, PlayerRepository playerRepository) {
         this.playerResultRepository = playerResultRepository;
+        this.playerRepository = playerRepository;
     }
 
     @Transactional
@@ -39,10 +44,10 @@ public class PlayerResultService {
 
         PlayerResult result = new PlayerResult();
 
-        result.setName(request.name());
-        result.setSurname(request.surname());
-        result.setRealTeamName(request.realTeamName());
-        result.setRealTeamShirtNum(request.realTeamShirtNum());
+        Player player = playerRepository.findByNameAndSurnameAndRealTeamNameAndRealTeamShirtNum(
+                        request.name(), request.surname(), request.realTeamName(), request.realTeamShirtNum())
+                .orElseThrow(() -> new NotFoundException("player_not_found", "Giocatore non esistente"));
+        result.setPlayer(player);
 
         result.setRating(request.rating());
 

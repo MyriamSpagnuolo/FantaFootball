@@ -52,7 +52,7 @@ public class LeagueMatchService {
             throw new ConflictException("calendar_already_generated", "Il calendario per questa lega è già stato generato");
         }
 
-        List<Team> teams = teamRepository.findByLeagueId(leagueId);
+        List<Team> teams = teamRepository.findAllTeamByLeagueId(leagueId);
         List<Matchday> availableMatchdays = matchdayRepository.findByClosedFalseOrderByDateAsc();
 
         List<List<MatchPairing>> schedule = roundRobinScheduler.generateSchedule(teams, availableMatchdays.size());
