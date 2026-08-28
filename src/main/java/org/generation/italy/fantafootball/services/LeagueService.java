@@ -48,7 +48,7 @@ public class LeagueService {
 
         League savedLeague = leagueRepository.save(league);
 
-        String teamName = admin.getUsername() + "'s Team";
+        String teamName = admin.getUsername() + "Nome Team";
         Team adminTeam = new Team(teamName, admin, savedLeague);
         teamRepository.save(adminTeam);
 
