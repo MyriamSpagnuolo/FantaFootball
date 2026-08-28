@@ -10,5 +10,5 @@ public interface TeamPlayerRepository extends JpaRepository<TeamPlayer,Long> {
     // 1. serve per trovare i giocatori nella squadra prima di rimuoverli
     List<TeamPlayer> findAllByTeamId(Long teamId);
 
+    boolean existsByPlayer_IdAndLeague_IdAndTransferDateIsNull(Long playerId, Long leagueId);
 }
-

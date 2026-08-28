@@ -274,7 +274,7 @@ CREATE TABLE public.player_results (
                                        clean_sheet boolean,
                                        yellow_card integer NOT NULL,
                                        red_card boolean NOT NULL,
-    matchday_id bigint NOT NULL
+                                       matchday_id bigint NOT NULL
 );
 
 
