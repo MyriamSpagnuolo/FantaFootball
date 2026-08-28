@@ -15,6 +15,7 @@ import org.generation.italy.fantafootball.model.repositories.TeamPlayerRepositor
 import org.generation.italy.fantafootball.model.repositories.TeamRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,24 +39,27 @@ public class TeamService {
     }
 
     public TeamResponse createTeam(CreateTeamRequest request) {
-        boolean duplicate = teamRepository.existsByNameAndLeagueId(
-                request.name(), request.leagueId());
-        if (duplicate) {
+        boolean duplicateName = teamRepository.existsByNameAndLeagueId(request.name(), request.leagueId());
+        if (duplicateName) {
             throw new ConflictException("DUPLICATE_TEAM_NAME",
                     "Esiste già una squadra con questo nome in questa lega");
         }
 
+        boolean userAlreadyHasTeam = teamRepository.existsByUserIdAndLeagueId(request.userId(), request.leagueId());
+        if (userAlreadyHasTeam) {
+            throw new ConflictException("USER_ALREADY_HAS_TEAM",
+                    "Questo utente ha già una squadra in questa lega");
+        }
+
         Optional<AppUser> existingUser = appUserRepository.findById(request.userId());
         if (existingUser.isEmpty()) {
-            throw new NotFoundException("USER_NOT_FOUND",
-                    "Utente non trovato: " + request.userId());
+            throw new NotFoundException("USER_NOT_FOUND", "Utente non trovato: " + request.userId());
         }
         AppUser user = existingUser.get();
 
         Optional<League> existingLeague = leagueRepository.findById(request.leagueId());
         if (existingLeague.isEmpty()) {
-            throw new NotFoundException("LEAGUE_NOT_FOUND",
-                    "Lega non trovata: " + request.leagueId());
+            throw new NotFoundException("LEAGUE_NOT_FOUND", "Lega non trovata: " + request.leagueId());
         }
         League league = existingLeague.get();
 
@@ -65,6 +69,7 @@ public class TeamService {
         return TeamResponse.fromEntity(saved);
     }
 
+    @Transactional(readOnly = true)
     public List<TeamPlayerResponse> getTeamRoster(Long teamId) {
         if (!teamRepository.existsById(teamId)) {
             throw new NotFoundException("TEAM_NOT_FOUND", "Squadra non trovata: " + teamId);
