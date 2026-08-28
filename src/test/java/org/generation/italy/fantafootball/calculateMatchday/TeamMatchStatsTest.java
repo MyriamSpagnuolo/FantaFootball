@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.*;
 
 class TeamMatchStatsTest {
@@ -29,12 +30,47 @@ class TeamMatchStatsTest {
     }
 
     @Test
+    void doesNotApplyDefensiveModifierToAThreeDefenderLineup() {
+        Lineup lineup = mock(Lineup.class);
+        when(lineup.isDefensive()).thenReturn(true);
+
+        MatchdayLineup matchdayLineup = new MatchdayLineup(
+                lineup,
+                List.of(
+                        player("P", 7.0),
+                        player("D", 7.0),
+                        player("D", 7.0),
+                        player("D", 7.0)));
+
+        assertEquals(0, new TeamMatchStats().calculateModBonus(matchdayLineup));
+    }
+
+    @Test
     void doesNotApplyDefensiveModifierToAnOffensiveLineup() {
         Lineup lineup = mock(Lineup.class);
         when(lineup.isDefensive()).thenReturn(false);
 
         assertEquals(0, new TeamMatchStats().calculateModBonus(
                 new MatchdayLineup(lineup, List.of())));
+    }
+
+    @Test
+    void acceptsAnIncompleteEffectiveLineupAndCountsASubstitute() {
+        Lineup lineup = mock(Lineup.class);
+        when(lineup.isDefensive()).thenReturn(false);
+
+        PlayerMatchStats goalkeeper = player("P", 6.0);
+        when(goalkeeper.getLineupPlayer().isStarter()).thenReturn(false);
+        when(goalkeeper.calculateFantaRating()).thenReturn(6.0);
+        PlayerMatchStats defender = player("D", 6.0);
+        when(defender.calculateFantaRating()).thenReturn(6.0);
+
+        MatchdayLineup effectiveLineup = new MatchdayLineup(
+                lineup,
+                List.of(goalkeeper, defender));
+
+        assertDoesNotThrow(() -> new TeamMatchStats().calculateFantaRatingLineup(effectiveLineup));
+        assertEquals(12.0, new TeamMatchStats().calculateFantaRatingLineup(effectiveLineup));
     }
 
     private static PlayerMatchStats player(String position, double vote) {

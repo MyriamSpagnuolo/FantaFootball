@@ -9,8 +9,12 @@ import org.generation.italy.fantafootball.model.exceptions.NotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class MatchdayCalculationService {
@@ -45,10 +49,38 @@ public class MatchdayCalculationService {
             throw new IllegalArgumentException("Lineup team does not belong to the league match");
         }
 
-        List<PlayerMatchStats> players = lineup.getPlayers().stream()
+        List<LineupPlayer> starters = lineup.getPlayers().stream()
                 .filter(LineupPlayer::isStarter)
-                .map(player -> toMatchStats(lineup, player))
                 .toList();
+        List<LineupPlayer> substitutes = lineup.getPlayers().stream()
+                .filter(player -> !player.isStarter())
+                .toList();
+
+        Set<Long> usedPlayers = new HashSet<>();
+        List<PlayerMatchStats> players = new ArrayList<>();
+
+        for (LineupPlayer starter : starters) {
+            Optional<PlayerMatchStats> starterStats = toPlayedMatchStats(lineup, starter);
+            if (starterStats.isPresent()) {
+                players.add(starterStats.get());
+                usedPlayers.add(starter.getPlayerId());
+                continue;
+            }
+
+            // Le sostituzioni sono per ruolo e rispettano l'ordine della panchina
+            // restituito dalla lineup. Un giocatore può entrare una sola volta.
+            substitutes.stream()
+                    .filter(substitute -> !usedPlayers.contains(substitute.getPlayerId()))
+                    .filter(substitute -> samePosition(starter, substitute))
+                    .map(substitute -> toPlayedMatchStats(lineup, substitute)
+                            .map(stats -> new SubstitutionCandidate(substitute, stats)))
+                    .flatMap(Optional::stream)
+                    .findFirst()
+                    .ifPresent(candidate -> {
+                        players.add(candidate.stats());
+                        usedPlayers.add(candidate.player().getPlayerId());
+                    });
+        }
 
         return teamMatchStats.calculateFantaRatingLineup(
                 new MatchdayLineup(lineup, players)
@@ -60,18 +92,25 @@ public class MatchdayCalculationService {
         return GoalsCalculator.calculateGoals(calculateLineupScore(lineupId));
     }
 
-    private PlayerMatchStats toMatchStats(Lineup lineup, LineupPlayer lineupPlayer) {
+    private Optional<PlayerMatchStats> toPlayedMatchStats(Lineup lineup, LineupPlayer lineupPlayer) {
         var player = lineupPlayer.getTeamPlayer();
-        PlayerResult result = playerResultRepository
+        Optional<PlayerResult> result = playerResultRepository
                 .findByPlayerIdAndMatchdayId(
                         player.getPlayer().getId(),
                         lineup.getLeagueMatch().getMatchday().getId()
-                )
-                .orElseThrow(() -> new NotFoundException(
-                        "player_result_not_found",
-                        "Result not found for player: " + player.getPlayer().getName() + " " + player.getPlayer().getSurname()
-                ));
+                );
 
-        return new PlayerMatchStats(lineupPlayer, result);
+        // Un voto nullo identifica un giocatore che non ha giocato. L'assenza
+        // del record ha lo stesso effetto e non deve bloccare la giornata.
+        return result.filter(playerResult -> playerResult.getRating() != null)
+                .map(playerResult -> new PlayerMatchStats(lineupPlayer, playerResult));
+    }
+
+    private boolean samePosition(LineupPlayer first, LineupPlayer second) {
+        return first.getPosition() != null
+                && first.getPosition().equalsIgnoreCase(second.getPosition());
+    }
+
+    private record SubstitutionCandidate(LineupPlayer player, PlayerMatchStats stats) {
     }
 }

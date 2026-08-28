@@ -7,7 +7,6 @@ public class TeamMatchStats {
     public double calculateFantaRatingLineup(MatchdayLineup lineup) {
         lineup.validate();
         double total = lineup.getPlayers().stream()
-                .filter(player -> player.getLineupPlayer().isStarter())
                 .mapToDouble(PlayerMatchStats::calculateFantaRating)
                 .sum();
 
@@ -19,13 +18,13 @@ public class TeamMatchStats {
             return 0;
         }
         List<PlayerMatchStats> defenders = lineup.getDefenders().stream()
-                .filter(player -> player.getLineupPlayer().isStarter())
                 .sorted(Comparator.comparing(PlayerMatchStats::getVote).reversed())
                 .toList();
         PlayerMatchStats goalkeeper = lineup.getGoalkeeper();
 
-        // Il modificatore esistente richiede portiere e almeno tre difensori.
-        if (goalkeeper == null || defenders.size() < 3) {
+        // Il modificatore richiede portiere e almeno quattro difensori.
+        // Anche con quattro o più difensori la media usa solo i tre migliori.
+        if (goalkeeper == null || defenders.size() < 4) {
             return 0;
         }
 

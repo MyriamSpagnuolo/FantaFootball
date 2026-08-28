@@ -32,23 +32,20 @@ public class MatchdayLineup {
     public PlayerMatchStats getGoalkeeper() {
         return players.stream()
                 .filter(p -> isPosition(p, "P"))
-                .filter(p -> p.getLineupPlayer().isStarter())
                 .findFirst()
                 .orElse(null);
     }
 
     public void validate() {
         long goalkeepers = players.stream()
-                .filter(p -> p.getLineupPlayer().isStarter())
                 .filter(p -> "P".equalsIgnoreCase(p.getLineupPlayer().getPosition()))
                 .count();
 
-        if (goalkeepers != 1) {
-            throw new IllegalArgumentException("A lineup must have exactly one starting goalkeeper");
+        if (goalkeepers > 1) {
+            throw new IllegalArgumentException("A lineup cannot have more than one goalkeeper");
         }
 
         boolean invalidPosition = players.stream()
-                .filter(p -> p.getLineupPlayer().isStarter())
                 .anyMatch(p -> p.getLineupPlayer().getPosition() == null
                         || !VALID_POSITIONS.contains(p.getLineupPlayer().getPosition().toUpperCase()));
         if (invalidPosition) {
