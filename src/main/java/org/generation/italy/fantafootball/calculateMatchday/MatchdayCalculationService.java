@@ -50,16 +50,13 @@ public class MatchdayCalculationService {
     private PlayerMatchStats toMatchStats(Lineup lineup, LineupPlayer lineupPlayer) {
         var player = lineupPlayer.getTeamPlayer();
         PlayerResult result = playerResultRepository
-                .findByMatchdayIdAndNameAndSurnameAndRealTeamNameAndRealTeamShirtNum(
-                        lineup.getLeagueMatch().getMatchday().getId(),
-                        player.getName(),
-                        player.getSurname(),
-                        player.getRealTeamName(),
-                        player.getRealTeamShirtNum()
+                .findByPlayerIdAndMatchdayId(
+                        player.getPlayer().getId(),
+                        lineup.getLeagueMatch().getMatchday().getId()
                 )
                 .orElseThrow(() -> new NotFoundException(
                         "player_result_not_found",
-                        "Result not found for player: " + player.getName() + " " + player.getSurname()
+                        "Result not found for player: " + player.getPlayer().getName() + " " + player.getPlayer().getSurname()
                 ));
 
         return new PlayerMatchStats(lineupPlayer, result);

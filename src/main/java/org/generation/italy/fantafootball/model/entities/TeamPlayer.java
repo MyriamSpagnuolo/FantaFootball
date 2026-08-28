@@ -22,23 +22,13 @@ public class TeamPlayer {
     @JoinColumn(name = "team_id", nullable = false)
     private Team team;
 
-    @Column(name = "name", nullable = false)
-    private String name;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "league_id", nullable = false)
+    private League league;
 
-    @Column(name = "surname", nullable = false)
-    private String surname;
-
-    @Column(name = "real_team_name", nullable = false)
-    private String realTeamName;
-
-    @Column(name = "real_team_shirt_num", nullable = false)
-    private int realTeamShirtNum;
-
-    @Column(name = "price", nullable = false)
-    private int price;
-
-    @Column(name = "is_injured", nullable = false)
-    private boolean injured;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "player_id", nullable = false)
+    private Player player;
 
     @Column(name = "purchase_date", nullable = false)
     private LocalDate purchaseDate;
@@ -52,14 +42,10 @@ public class TeamPlayer {
     public TeamPlayer() {
     }
 
-    public TeamPlayer(Team team, String name, String surname, String realTeamName, int realTeamShirtNum,
-                       int price, LocalDate purchaseDate, int purchasePrice) {
+    public TeamPlayer(Team team, League league, Player player, LocalDate purchaseDate, int purchasePrice) {
         this.team = team;
-        this.name = name;
-        this.surname = surname;
-        this.realTeamName = realTeamName;
-        this.realTeamShirtNum = realTeamShirtNum;
-        this.price = price;
+        this.league = league;
+        this.player = player;
         this.purchaseDate = purchaseDate;
         this.purchasePrice = purchasePrice;
     }
@@ -76,52 +62,20 @@ public class TeamPlayer {
         this.team = team;
     }
 
-    public String getName() {
-        return name;
+    public League getLeague() {
+        return league;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setLeague(League league) {
+        this.league = league;
     }
 
-    public String getSurname() {
-        return surname;
+    public Player getPlayer() {
+        return player;
     }
 
-    public void setSurname(String surname) {
-        this.surname = surname;
-    }
-
-    public String getRealTeamName() {
-        return realTeamName;
-    }
-
-    public void setRealTeamName(String realTeamName) {
-        this.realTeamName = realTeamName;
-    }
-
-    public int getRealTeamShirtNum() {
-        return realTeamShirtNum;
-    }
-
-    public void setRealTeamShirtNum(int realTeamShirtNum) {
-        this.realTeamShirtNum = realTeamShirtNum;
-    }
-
-    public int getPrice() {
-        return price;
-    }
-
-    public void setPrice(int price) {
-        this.price = price;
-    }
-
-    public boolean isInjured() {
-        return injured;
-    }
-
-    public void setInjured(boolean injured) {
-        this.injured = injured;
+    public void setPlayer(Player player) {
+        this.player = player;
     }
 
     public LocalDate getPurchaseDate() {
