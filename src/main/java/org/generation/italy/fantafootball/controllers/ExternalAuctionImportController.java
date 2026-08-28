@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/leagues/{leagueId}/teams/{teamId}")
 public class ExternalAuctionImportController {
-    private ExternalAuctionImportService service;
+    private final ExternalAuctionImportService importService;
 
     public ExternalAuctionImportController(ExternalAuctionImportService service) {
-        this.service = service;
+        this.importService = service;
     }
 
     @PostMapping("/players/import")
@@ -28,7 +28,7 @@ public class ExternalAuctionImportController {
             @Valid @RequestBody AuctionRosterImportRequest request,
             @AuthenticationPrincipal Jwt jwt) {
         Long authenticatedUserId = getAuthenticatedUserId(jwt);
-         service.importRoster(
+         importService.importRoster(
                  leagueId,
                  teamId,
                  authenticatedUserId,

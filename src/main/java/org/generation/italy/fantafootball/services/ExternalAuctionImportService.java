@@ -43,12 +43,13 @@ public class ExternalAuctionImportService {
         List<AuctionPlayerImportRequest> players = validateRoster(roster);
         long totalPrice = calculateBudget(players);
         validateBudget(totalPrice,team);
-        List<TeamPlayer> teamPlayers = importedPlayers(players,team);
+        List<TeamPlayer> teamPlayers = serializeImportedPlayers(players,team);
         playerRepository.saveAll(teamPlayers);
         team.setBudget((int) (team.getBudget() - totalPrice));
         teamRepository.save(team);
     }
 
+    //controllo se il budget della squadra permette di trasferire i giocatori
     private void validateBudget(long totalPrice,Team team) {
         if(totalPrice > team.getBudget()) {
             throw new ConflictException(
@@ -58,15 +59,17 @@ public class ExternalAuctionImportService {
         }
     }
 
-    public List<TeamPlayer> importedPlayers(List<AuctionPlayerImportRequest> players,Team team) {
+    //trasformi i player ricevuti dal servizio esterno in teamPlayer
+    private List<TeamPlayer> serializeImportedPlayers(List<AuctionPlayerImportRequest> players, Team team) {
         return players.stream()
-                .map(player -> new TeamPlayer(team, player.name(), player.surname(),
+                .map(player ->
+                        new TeamPlayer(team, player.name(), player.surname(),
                         player.realTeamName(), player.realTeamShirtNum(), player.purchasePrice(),
                         LocalDate.now(), player.purchasePrice()))
                 .toList();
     }
 
-
+    //tramite i metodi crud verifico che esistano sia la lega che la squadra
     private League findLeague(Long id) {
         if (id == null) throw new BadRequestException("invalid_league_id", "L'ID della lega è obbligatorio");
         return leagueRepository.findById(id)
@@ -83,12 +86,14 @@ public class ExternalAuctionImportService {
                         "Questo team non esiste"));
     }
 
+    //controllo se l'admin che ha fatto la richiesta sia effettivamente l'admin della lega su cui vuole inserire i player
     private void validateAdmin(League league, Long authenticatedUserId) {
         if (!Objects.equals(league.getAdmin().getId(), authenticatedUserId))
             throw new AccessDeniedException(
                     "Solo l'admin della lega può importare giocatori");
     }
 
+    //controllo che la lega del team su cui andrò ad inserire i giocatori sia effetivamente la lega presa in input
     private void validateTeamBelongsToLeague(Team team, League league) {
         if (!Objects.equals(team.getLeague().getId(), league.getId()))
             throw new BadRequestException(
@@ -96,6 +101,7 @@ public class ExternalAuctionImportService {
                     "Il team non appartiene alla lega indicata");
     }
 
+    //controllo prima che non sia vuota e poi che lo stato dei suoi DTO dentro la collection sia valido
     private List<AuctionPlayerImportRequest> validateRoster(AuctionRosterImportRequest roster) {
         if (roster == null || roster.players() == null || roster.players().isEmpty())
             throw new BadRequestException(
@@ -113,6 +119,7 @@ public class ExternalAuctionImportService {
         return roster.players();
     }
 
+    //trasformo la lista di DTO in un numero per potere calcolare il costo totale dei giocatori
     private Long calculateBudget(List<AuctionPlayerImportRequest>players) {
          return players.stream().mapToLong(AuctionPlayerImportRequest::purchasePrice).sum();
     }
