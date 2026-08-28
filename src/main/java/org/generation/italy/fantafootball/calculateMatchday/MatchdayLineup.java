@@ -3,12 +3,20 @@ package org.generation.italy.fantafootball.calculateMatchday;
 import org.generation.italy.fantafootball.model.entities.Lineup;
 
 import java.util.List;
+import java.util.Set;
 
 public class MatchdayLineup {
+    private static final Set<String> VALID_POSITIONS = Set.of("P", "D", "C", "A");
     private final Lineup lineup;
     private final List<PlayerMatchStats> players;
 
     public MatchdayLineup(Lineup lineup, List<PlayerMatchStats> players) {
+        if (lineup == null) {
+            throw new IllegalArgumentException("A lineup is required");
+        }
+        if (players == null) {
+            throw new IllegalArgumentException("Players are required");
+        }
         this.lineup = lineup;
         this.players = List.copyOf(players);
     }
@@ -27,6 +35,25 @@ public class MatchdayLineup {
                 .filter(p -> p.getLineupPlayer().isStarter())
                 .findFirst()
                 .orElse(null);
+    }
+
+    public void validate() {
+        long goalkeepers = players.stream()
+                .filter(p -> p.getLineupPlayer().isStarter())
+                .filter(p -> "P".equalsIgnoreCase(p.getLineupPlayer().getPosition()))
+                .count();
+
+        if (goalkeepers != 1) {
+            throw new IllegalArgumentException("A lineup must have exactly one starting goalkeeper");
+        }
+
+        boolean invalidPosition = players.stream()
+                .filter(p -> p.getLineupPlayer().isStarter())
+                .anyMatch(p -> p.getLineupPlayer().getPosition() == null
+                        || !VALID_POSITIONS.contains(p.getLineupPlayer().getPosition().toUpperCase()));
+        if (invalidPosition) {
+            throw new IllegalArgumentException("Every starting player must have a valid position");
+        }
     }
 
     public List<PlayerMatchStats> getDefenders() {

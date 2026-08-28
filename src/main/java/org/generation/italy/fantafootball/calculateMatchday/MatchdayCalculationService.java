@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class MatchdayCalculationService {
@@ -28,9 +29,21 @@ public class MatchdayCalculationService {
 
     @Transactional(readOnly = true)
     public double calculateLineupScore(Long lineupId) {
+        if (lineupId == null) {
+            throw new IllegalArgumentException("Lineup id is required");
+        }
         Lineup lineup = lineupRepository.findById(lineupId)
                 .orElseThrow(() -> new NotFoundException(
                         "lineup_not_found", "Lineup not found: " + lineupId));
+
+        if (!lineup.getLeagueMatch().getMatchday().isClosed()) {
+            throw new IllegalStateException("The matchday is not closed yet");
+        }
+
+        if (!Objects.equals(lineup.getTeam().getId(), lineup.getLeagueMatch().getHomeTeam().getId())
+                && !Objects.equals(lineup.getTeam().getId(), lineup.getLeagueMatch().getAwayTeam().getId())) {
+            throw new IllegalArgumentException("Lineup team does not belong to the league match");
+        }
 
         List<PlayerMatchStats> players = lineup.getPlayers().stream()
                 .filter(LineupPlayer::isStarter)

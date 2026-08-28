@@ -5,6 +5,7 @@ import java.util.List;
 
 public class TeamMatchStats {
     public double calculateFantaRatingLineup(MatchdayLineup lineup) {
+        lineup.validate();
         double total = lineup.getPlayers().stream()
                 .filter(player -> player.getLineupPlayer().isStarter())
                 .mapToDouble(PlayerMatchStats::calculateFantaRating)
@@ -14,6 +15,9 @@ public class TeamMatchStats {
     }
 
     public int calculateModBonus(MatchdayLineup lineup) {
+        if (!lineup.getLineup().isDefensive()) {
+            return 0;
+        }
         List<PlayerMatchStats> defenders = lineup.getDefenders().stream()
                 .filter(player -> player.getLineupPlayer().isStarter())
                 .sorted(Comparator.comparing(PlayerMatchStats::getVote).reversed())

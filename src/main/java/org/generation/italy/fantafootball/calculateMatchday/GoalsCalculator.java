@@ -14,6 +14,9 @@ public final class GoalsCalculator {
     }
 
     public static int calculateGoals(double points) {
+        if (!Double.isFinite(points) || points < 0) {
+            throw new IllegalArgumentException("Points must be a finite, non-negative number");
+        }
         if (points < FIRST_GOAL_THRESHOLD) {
             return 0;
         }
