@@ -189,6 +189,34 @@ CREATE TABLE public.matchday (
 
 
 --
+-- Name: seq_player_id; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.seq_player_id
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: player; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.player (
+    id bigint DEFAULT nextval('public.seq_player_id'::regclass) NOT NULL,
+    external_id bigint NOT NULL,
+    name character varying NOT NULL,
+    surname character varying NOT NULL,
+    real_team_name character varying NOT NULL,
+    real_team_shirt_num integer NOT NULL,
+    price integer NOT NULL,
+    is_injured boolean NOT NULL
+);
+
+
+--
 -- Name: seq_player_results_id; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -206,8 +234,7 @@ CREATE SEQUENCE public.seq_player_results_id
 
 CREATE TABLE public.player_results (
     id bigint DEFAULT nextval('public.seq_player_results_id'::regclass) NOT NULL,
-    name character varying NOT NULL,
-    surname character varying NOT NULL,
+    player_id bigint NOT NULL,
     rating numeric,
     goal_num integer NOT NULL,
     goal_conceded integer NOT NULL,
@@ -218,8 +245,6 @@ CREATE TABLE public.player_results (
     clean_sheet boolean,
     yellow_card integer NOT NULL,
     red_card boolean NOT NULL,
-    real_team_name character varying NOT NULL,
-    real_team_shirt_num integer NOT NULL,
     matchday_id bigint NOT NULL
 );
 
@@ -283,15 +308,11 @@ CREATE TABLE public.team (
 CREATE TABLE public.team_player (
     id bigint DEFAULT nextval('public.seq_team_player_id'::regclass) NOT NULL,
     team_id bigint NOT NULL,
+    league_id bigint NOT NULL,
+    player_id bigint NOT NULL,
     purchase_date date NOT NULL,
     transfer_date date,
     purchase_price integer NOT NULL,
-    real_team_name character varying NOT NULL,
-    real_team_shirt_num integer NOT NULL,
-    price integer NOT NULL,
-    is_injured boolean NOT NULL,
-    name character varying NOT NULL,
-    surname character varying NOT NULL,
     CONSTRAINT chk_purchase_price CHECK ((purchase_price >= 0))
 );
 
@@ -380,6 +401,14 @@ ALTER TABLE ONLY public.app_user_roles
 
 
 --
+-- Name: player player_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.player
+    ADD CONSTRAINT player_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: player_results player_results_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -444,6 +473,22 @@ ALTER TABLE ONLY public.matchday
 
 
 --
+-- Name: player uq_player_external_id; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.player
+    ADD CONSTRAINT uq_player_external_id UNIQUE (external_id);
+
+
+--
+-- Name: player_results uq_player_results_player_matchday; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.player_results
+    ADD CONSTRAINT uq_player_results_player_matchday UNIQUE (player_id, matchday_id);
+
+
+--
 -- Name: team uq_team_name_league; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -452,18 +497,19 @@ ALTER TABLE ONLY public.team
 
 
 --
--- Name: team_player uq_team_player_identity; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.team_player
-    ADD CONSTRAINT uq_team_player_identity UNIQUE (name, surname, real_team_name, real_team_shirt_num);
-
-
---
 -- Name: ux_app_users_username_lower; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX ux_app_users_username_lower ON public.app_users USING btree (lower((username)::text));
+
+
+--
+-- Name: ux_team_player_active_per_league; Type: INDEX; Schema: public; Owner: -
+--
+-- Un giocatore puo' avere al piu' un possesso attivo (transfer_date IS NULL)
+-- per lega; leghe diverse possono possedere lo stesso player in parallelo.
+
+CREATE UNIQUE INDEX ux_team_player_active_per_league ON public.team_player USING btree (player_id, league_id) WHERE (transfer_date IS NULL);
 
 
 --
@@ -563,11 +609,11 @@ ALTER TABLE ONLY public.player_results
 
 
 --
--- Name: player_results fk_player_results_teamplayer; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: player_results fk_player_results_player; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.player_results
-    ADD CONSTRAINT fk_player_results_teamplayer FOREIGN KEY (name, surname, real_team_name, real_team_shirt_num) REFERENCES public.team_player(name, surname, real_team_name, real_team_shirt_num);
+    ADD CONSTRAINT fk_player_results_player FOREIGN KEY (player_id) REFERENCES public.player(id);
 
 
 --
@@ -584,6 +630,22 @@ ALTER TABLE ONLY public.team
 
 ALTER TABLE ONLY public.team
     ADD CONSTRAINT fk_team_user FOREIGN KEY (user_id) REFERENCES public.app_users(user_id) ON DELETE CASCADE;
+
+
+--
+-- Name: team_player fk_tp_league; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.team_player
+    ADD CONSTRAINT fk_tp_league FOREIGN KEY (league_id) REFERENCES public.league(id) ON DELETE CASCADE;
+
+
+--
+-- Name: team_player fk_tp_player; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.team_player
+    ADD CONSTRAINT fk_tp_player FOREIGN KEY (player_id) REFERENCES public.player(id);
 
 
 --
