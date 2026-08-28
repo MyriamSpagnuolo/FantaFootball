@@ -2,6 +2,8 @@ package org.generation.italy.fantafootball.controllers;
 
 import org.generation.italy.fantafootball.model.dto.TradeDto;
 import org.generation.italy.fantafootball.services.TradeService;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,8 +19,9 @@ public class TradeController {
 
 
     @GetMapping("/all")
-    public List<TradeDto> getAllTradesByUserId(){
-        return tradeService.getAllByUserId();
+    public List<TradeDto> getAllTradesByUserId(@AuthenticationPrincipal Jwt jwt){
+        Number userId = jwt.getClaim("uid");
+        return tradeService.getAllByUserId(userId.longValue());
     }
 
     @GetMapping("/received/{teamId}")
@@ -27,7 +30,7 @@ public class TradeController {
     }
 
     @GetMapping("/sent/{teamId}")
-    public List<TradeDto> getPendingSentTradeRequests(@PathVariable  Long teamId) {
+    public List<TradeDto> getPendingSentTradeRequests(@PathVariable Long teamId) {
         return tradeService.getAllPendingSentTradesByTeamId(teamId);
     }
 

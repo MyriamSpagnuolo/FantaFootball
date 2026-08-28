@@ -24,8 +24,8 @@ public record TradeDto(
                 trade.getProposingTeam().getName(),
                 trade.getReceivingTeam().getId(),
                 trade.getReceivingTeam().getName(),
-                trade.getRequestedPlayer().getName(),
-                trade.getOfferedPlayer().getName(),
+                trade.getRequestedPlayer().getPlayer().getName(),
+                trade.getOfferedPlayer().getPlayer().getName(),
                 trade.getAmount(),
                 trade.getStatus(),
                 trade.getProposalDate()
