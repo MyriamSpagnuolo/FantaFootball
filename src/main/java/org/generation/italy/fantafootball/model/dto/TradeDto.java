@@ -7,19 +7,25 @@ import java.time.LocalDateTime;
 
 public record TradeDto(
         long id,
-        String otherTeamId,
-        String otherTeamName,
-        long requestedPlayerId,
-        long offeredPlayerId,
+        long proposingTeamId,
+        String proposingTeamName,
+        long receivingTeamId,
+        String receivingTeamName,
+        String requestedPlayerName,
+        String offeredPlayerName,
         Integer amount,
         TradeStatus status,
         LocalDateTime proposalDate
 ) {
-    public static TradeDto fromEntity(Trade trade, String otherTeamName) {
+    public static TradeDto fromEntity(Trade trade) {
         return new TradeDto(
                 trade.getId(),
-                otherTeamName,
-                trade.getOfferedPlayer().getId(),
+                trade.getProposingTeam().getId(),
+                trade.getProposingTeam().getName(),
+                trade.getReceivingTeam().getId(),
+                trade.getReceivingTeam().getName(),
+                trade.getRequestedPlayer().getName(),
+                trade.getOfferedPlayer().getName(),
                 trade.getAmount(),
                 trade.getStatus(),
                 trade.getProposalDate()

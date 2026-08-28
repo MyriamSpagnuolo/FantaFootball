@@ -2,13 +2,12 @@ package org.generation.italy.fantafootball.controllers;
 
 import org.generation.italy.fantafootball.model.dto.TradeDto;
 import org.generation.italy.fantafootball.services.TradeService;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/teams/{teamId}/trades")
+@RequestMapping("/api/trade")
 public class TradeController {
     private final TradeService tradeService;
 
@@ -16,19 +15,26 @@ public class TradeController {
         this.tradeService = tradeService;
     }
 
-    @GetMapping("/received")
-    public List<TradeDto> getReceivedTradeRequests(@PathVariable Long teamId) {
-        return tradeService.getAllReceivedTradesByTeamId(teamId);
+
+    @GetMapping("/all")
+    public List<TradeDto> getAllTradesByUserId(){
+        return tradeService.getAllByUserId();
     }
 
-    @GetMapping("/sent")
-    public List<TradeDto> getSentTradeRequests(@PathVariable  Long teamId) {
-        return tradeService.getAllSentTradesByTeamId(teamId);
+    @GetMapping("/received/{teamId}")
+    public List<TradeDto> getPendingReceivedTradeRequests(@PathVariable Long teamId) {
+        return tradeService.getAllPendingReceivedTradesByTeamId(teamId);
+    }
+
+    @GetMapping("/sent/{teamId}")
+    public List<TradeDto> getPendingSentTradeRequests(@PathVariable  Long teamId) {
+        return tradeService.getAllPendingSentTradesByTeamId(teamId);
     }
 
     @DeleteMapping("remove/{id}")
     public void removeTradeRequestById(@PathVariable Long id) {
         tradeService.deleteTradeById(id);
     }
+
 
 }

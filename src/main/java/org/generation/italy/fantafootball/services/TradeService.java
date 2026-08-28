@@ -1,6 +1,7 @@
 package org.generation.italy.fantafootball.services;
 
 import org.generation.italy.fantafootball.model.dto.TradeDto;
+import org.generation.italy.fantafootball.model.entities.TradeStatus;
 import org.generation.italy.fantafootball.model.repositories.TradeRepository;
 import org.springframework.stereotype.Service;
 
@@ -14,21 +15,31 @@ public class TradeService {
         this.tradeRepository = tradeRepository;
     }
 
-    public List<TradeDto> getAllSentTradesByTeamId(Long id){
-        return tradeRepository.findByProposingTeam_Id(id).stream()
-                .map(x -> TradeDto.fromEntity(x, x.getReceivingTeam().getName()))
+    public List<TradeDto> getAllByUserId(Long id){
+        return tradeRepository.findAllByUserId(id).stream()
+                .map(TradeDto::fromEntity)
                 .toList();
     }
 
-    public List<TradeDto> getAllReceivedTradesByTeamId(Long id){
-        return tradeRepository.findByReceivingTeam_Id(id).stream()
-                .map(x -> TradeDto.fromEntity(x, x.getProposingTeam().getName()))
+    public List<TradeDto> getAllPendingSentTradesByTeamId(Long id){
+        return tradeRepository.findByProposingTeam_IdAndStatus(id, TradeStatus.PENDING).stream()
+                .map(TradeDto::fromEntity)
                 .toList();
     }
 
+    public List<TradeDto> getAllPendingReceivedTradesByTeamId(Long id){
+        return tradeRepository.findByReceivingTeam_IdAndStatus(id, TradeStatus.PENDING).stream()
+                .map(TradeDto::fromEntity)
+                .toList();
+    }
+
+    public List<TradeDto> getTradeHistoryByTeamId(Long id){
+        return tradeRepository.findTradeHistoryByTeamId(id).stream()
+                .map(TradeDto::fromEntity)
+                .toList();
+    }
 
     public void deleteTradeById(Long id){
-
         tradeRepository.deleteById(id);
     }
 }
