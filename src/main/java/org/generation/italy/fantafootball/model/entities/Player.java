@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "player")
 public class Player {
-
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "player_id_seq_gen")
     @SequenceGenerator(

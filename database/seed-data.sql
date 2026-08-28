@@ -62,20 +62,20 @@ SELECT user_id, 'ADMIN' FROM app_users WHERE username = 'mario.rossi';
 -- league
 -- ---------------------------------------------------------------------
 INSERT INTO league (name, invite_code, admin_user_id, creation_date, budget) VALUES
-('Lega dei Campioni', 'LEGA2026',
- (SELECT user_id FROM app_users WHERE username = 'mario.rossi'),
- TIMESTAMP '2026-08-01 10:00:00', 500);
+    ('Lega dei Campioni', 'LEGA2026',
+     (SELECT user_id FROM app_users WHERE username = 'mario.rossi'),
+     TIMESTAMP '2026-08-01 10:00:00', 500);
 
 -- ---------------------------------------------------------------------
 -- team (una squadra per utente, tutte nella stessa lega)
 -- budget = 500 (budget di lega) - somma dei purchase_price dei giocatori
 -- ---------------------------------------------------------------------
 INSERT INTO team (name, user_id, league_id, budget, total_points) VALUES
-('I Bomber',             (SELECT user_id FROM app_users WHERE username = 'mario.rossi'),    (SELECT id FROM league WHERE invite_code = 'LEGA2026'), 383, 52),
-('Real Fanta',           (SELECT user_id FROM app_users WHERE username = 'luigi.bianchi'),  (SELECT id FROM league WHERE invite_code = 'LEGA2026'), 421, 47),
-('Gli Invincibili',      (SELECT user_id FROM app_users WHERE username = 'giovanni.verdi'), (SELECT id FROM league WHERE invite_code = 'LEGA2026'), 433, 38),
-('FC Imbattibili',       (SELECT user_id FROM app_users WHERE username = 'anna.russo'),     (SELECT id FROM league WHERE invite_code = 'LEGA2026'), 419, 60),
-('Atletico Fantacalcio', (SELECT user_id FROM app_users WHERE username = 'paolo.ferrari'),  (SELECT id FROM league WHERE invite_code = 'LEGA2026'), 433, 29);
+                                                                      ('I Bomber',             (SELECT user_id FROM app_users WHERE username = 'mario.rossi'),    (SELECT id FROM league WHERE invite_code = 'LEGA2026'), 383, 52),
+                                                                      ('Real Fanta',           (SELECT user_id FROM app_users WHERE username = 'luigi.bianchi'),  (SELECT id FROM league WHERE invite_code = 'LEGA2026'), 421, 47),
+                                                                      ('Gli Invincibili',      (SELECT user_id FROM app_users WHERE username = 'giovanni.verdi'), (SELECT id FROM league WHERE invite_code = 'LEGA2026'), 433, 38),
+                                                                      ('FC Imbattibili',       (SELECT user_id FROM app_users WHERE username = 'anna.russo'),     (SELECT id FROM league WHERE invite_code = 'LEGA2026'), 419, 60),
+                                                                      ('Atletico Fantacalcio', (SELECT user_id FROM app_users WHERE username = 'paolo.ferrari'),  (SELECT id FROM league WHERE invite_code = 'LEGA2026'), 433, 29);
 
 -- ---------------------------------------------------------------------
 -- league_invite: gli inviti ACCEPTED corrispondono ai 4 team creati dagli
@@ -173,13 +173,13 @@ INSERT INTO team_player (team_id, league_id, player_id, purchase_date, transfer_
 -- lineup_type (id assegnati a mano: non ha generazione automatica)
 -- ---------------------------------------------------------------------
 INSERT INTO lineup_type (id, defender_num, midfielder_num, foward_num) VALUES
-(1, 3, 4, 3), -- 3-4-3
-(2, 3, 5, 2), -- 3-5-2
-(3, 4, 3, 3), -- 4-3-3
-(4, 4, 4, 2), -- 4-4-2
-(5, 4, 5, 1), -- 4-5-1
-(6, 5, 3, 2), -- 5-3-2
-(7, 5, 4, 1); -- 5-4-1
+                                                                           (1, 3, 4, 3), -- 3-4-3
+                                                                           (2, 3, 5, 2), -- 3-5-2
+                                                                           (3, 4, 3, 3), -- 4-3-3
+                                                                           (4, 4, 4, 2), -- 4-4-2
+                                                                           (5, 4, 5, 1), -- 4-5-1
+                                                                           (6, 5, 3, 2), -- 5-3-2
+                                                                           (7, 5, 4, 1); -- 5-4-1
 
 -- ---------------------------------------------------------------------
 -- matchday (giornate REALI di campionato, condivise da tutte le leghe)
@@ -188,8 +188,8 @@ INSERT INTO lineup_type (id, defender_num, midfielder_num, foward_num) VALUES
 -- reale di campionato (matchday.number) da cui arrivano i player_results.
 -- ---------------------------------------------------------------------
 INSERT INTO matchday (number, date, is_closed) VALUES
-(3, DATE '2026-08-23', true),
-(4, DATE '2026-08-30', false);
+                                                   (3, DATE '2026-08-23', true),
+                                                   (4, DATE '2026-08-30', false);
 
 -- ---------------------------------------------------------------------
 -- player_results: dati "arrivati dal servizio esterno" per la giornata reale
@@ -230,35 +230,35 @@ INSERT INTO player_results (matchday_id, player_id, rating, goal_num, goal_conce
 --   I Bomber riposa.
 -- ---------------------------------------------------------------------
 INSERT INTO league_match (league_id, home_team_id, away_team_id, home_score, away_score, home_goals, away_goals, match_day, matchday_id, round_number) VALUES
-((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
- (SELECT id FROM team WHERE name = 'I Bomber'), (SELECT id FROM team WHERE name = 'Real Fanta'),
- 68.5, 54.0, 2, 1, TIMESTAMP '2026-08-23 15:00:00', (SELECT id FROM matchday WHERE number = 3), 1),
-((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
- (SELECT id FROM team WHERE name = 'Gli Invincibili'), (SELECT id FROM team WHERE name = 'FC Imbattibili'),
- 45.0, 72.5, 0, 3, TIMESTAMP '2026-08-23 15:00:00', (SELECT id FROM matchday WHERE number = 3), 1),
-((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
- (SELECT id FROM team WHERE name = 'Real Fanta'), (SELECT id FROM team WHERE name = 'Gli Invincibili'),
- NULL, NULL, NULL, NULL, TIMESTAMP '2026-08-30 15:00:00', (SELECT id FROM matchday WHERE number = 4), 2),
-((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
- (SELECT id FROM team WHERE name = 'FC Imbattibili'), (SELECT id FROM team WHERE name = 'Atletico Fantacalcio'),
- NULL, NULL, NULL, NULL, TIMESTAMP '2026-08-30 15:00:00', (SELECT id FROM matchday WHERE number = 4), 2);
+                                                                                                                                                           ((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
+                                                                                                                                                            (SELECT id FROM team WHERE name = 'I Bomber'), (SELECT id FROM team WHERE name = 'Real Fanta'),
+                                                                                                                                                            68.5, 54.0, 2, 1, TIMESTAMP '2026-08-23 15:00:00', (SELECT id FROM matchday WHERE number = 3), 1),
+                                                                                                                                                           ((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
+                                                                                                                                                            (SELECT id FROM team WHERE name = 'Gli Invincibili'), (SELECT id FROM team WHERE name = 'FC Imbattibili'),
+                                                                                                                                                            45.0, 72.5, 0, 3, TIMESTAMP '2026-08-23 15:00:00', (SELECT id FROM matchday WHERE number = 3), 1),
+                                                                                                                                                           ((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
+                                                                                                                                                            (SELECT id FROM team WHERE name = 'Real Fanta'), (SELECT id FROM team WHERE name = 'Gli Invincibili'),
+                                                                                                                                                            NULL, NULL, NULL, NULL, TIMESTAMP '2026-08-30 15:00:00', (SELECT id FROM matchday WHERE number = 4), 2),
+                                                                                                                                                           ((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
+                                                                                                                                                            (SELECT id FROM team WHERE name = 'FC Imbattibili'), (SELECT id FROM team WHERE name = 'Atletico Fantacalcio'),
+                                                                                                                                                            NULL, NULL, NULL, NULL, TIMESTAMP '2026-08-30 15:00:00', (SELECT id FROM matchday WHERE number = 4), 2);
 
 -- ---------------------------------------------------------------------
 -- lineup (solo per le partite gia' giocate di giornata 1)
 -- ---------------------------------------------------------------------
 INSERT INTO lineup (team_id, league_match_id, is_defensive, lineup_type_id) VALUES
-((SELECT id FROM team WHERE name = 'I Bomber'),
- (SELECT id FROM league_match WHERE home_team_id = (SELECT id FROM team WHERE name = 'I Bomber') AND away_team_id = (SELECT id FROM team WHERE name = 'Real Fanta')),
- false, 4), -- 4-4-2
-((SELECT id FROM team WHERE name = 'Real Fanta'),
- (SELECT id FROM league_match WHERE home_team_id = (SELECT id FROM team WHERE name = 'I Bomber') AND away_team_id = (SELECT id FROM team WHERE name = 'Real Fanta')),
- true, 6), -- 5-3-2, formazione difensiva
-((SELECT id FROM team WHERE name = 'Gli Invincibili'),
- (SELECT id FROM league_match WHERE home_team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili') AND away_team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')),
- false, 3), -- 4-3-3
-((SELECT id FROM team WHERE name = 'FC Imbattibili'),
- (SELECT id FROM league_match WHERE home_team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili') AND away_team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')),
- false, 1); -- 3-4-3
+                                                                                ((SELECT id FROM team WHERE name = 'I Bomber'),
+                                                                                 (SELECT id FROM league_match WHERE home_team_id = (SELECT id FROM team WHERE name = 'I Bomber') AND away_team_id = (SELECT id FROM team WHERE name = 'Real Fanta')),
+                                                                                 false, 4), -- 4-4-2
+                                                                                ((SELECT id FROM team WHERE name = 'Real Fanta'),
+                                                                                 (SELECT id FROM league_match WHERE home_team_id = (SELECT id FROM team WHERE name = 'I Bomber') AND away_team_id = (SELECT id FROM team WHERE name = 'Real Fanta')),
+                                                                                 true, 6), -- 5-3-2, formazione difensiva
+                                                                                ((SELECT id FROM team WHERE name = 'Gli Invincibili'),
+                                                                                 (SELECT id FROM league_match WHERE home_team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili') AND away_team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')),
+                                                                                 false, 3), -- 4-3-3
+                                                                                ((SELECT id FROM team WHERE name = 'FC Imbattibili'),
+                                                                                 (SELECT id FROM league_match WHERE home_team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili') AND away_team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')),
+                                                                                 false, 1); -- 3-4-3
 
 -- ---------------------------------------------------------------------
 -- lineup_player
@@ -269,41 +269,41 @@ INSERT INTO lineup (team_id, league_match_id, is_defensive, lineup_type_id) VALU
 -- ---------------------------------------------------------------------
 -- I Bomber: tutta la rosa disponibile (4 giocatori)
 INSERT INTO lineup_player (lineup_id, player_id, starter, position) VALUES
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')),
- (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber') AND player_id = (SELECT id FROM player WHERE name = 'Alessandro' AND surname = 'Ferri')), true, 'P'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')),
- (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber') AND player_id = (SELECT id FROM player WHERE name = 'Davide' AND surname = 'Conti')), true, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')),
- (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber') AND player_id = (SELECT id FROM player WHERE name = 'Matteo' AND surname = 'Galli')), true, 'C'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')),
- (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber') AND player_id = (SELECT id FROM player WHERE name = 'Simone' AND surname = 'Riva')), true, 'A');
+                                                                        ((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')),
+                                                                         (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber') AND player_id = (SELECT id FROM player WHERE name = 'Alessandro' AND surname = 'Ferri')), true, 'P'),
+                                                                        ((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')),
+                                                                         (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber') AND player_id = (SELECT id FROM player WHERE name = 'Davide' AND surname = 'Conti')), true, 'D'),
+                                                                        ((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')),
+                                                                         (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber') AND player_id = (SELECT id FROM player WHERE name = 'Matteo' AND surname = 'Galli')), true, 'C'),
+                                                                        ((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber')),
+                                                                         (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'I Bomber') AND player_id = (SELECT id FROM player WHERE name = 'Simone' AND surname = 'Riva')), true, 'A');
 
 -- Real Fanta: tutta la rosa disponibile (3 giocatori)
 INSERT INTO lineup_player (lineup_id, player_id, starter, position) VALUES
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta')),
- (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta') AND player_id = (SELECT id FROM player WHERE name = 'Federico' AND surname = 'Moretti')), true, 'P'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta')),
- (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta') AND player_id = (SELECT id FROM player WHERE name = 'Lorenzo' AND surname = 'Bruno')), true, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta')),
- (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta') AND player_id = (SELECT id FROM player WHERE name = 'Nicolo' AND surname = 'Fontana')), true, 'C');
+                                                                        ((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta')),
+                                                                         (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta') AND player_id = (SELECT id FROM player WHERE name = 'Federico' AND surname = 'Moretti')), true, 'P'),
+                                                                        ((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta')),
+                                                                         (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta') AND player_id = (SELECT id FROM player WHERE name = 'Lorenzo' AND surname = 'Bruno')), true, 'D'),
+                                                                        ((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta')),
+                                                                         (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'Real Fanta') AND player_id = (SELECT id FROM player WHERE name = 'Nicolo' AND surname = 'Fontana')), true, 'C');
 
 -- Gli Invincibili: tutta la rosa disponibile (3 giocatori)
 INSERT INTO lineup_player (lineup_id, player_id, starter, position) VALUES
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili')),
- (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili') AND player_id = (SELECT id FROM player WHERE name = 'Andrea' AND surname = 'Marino')), true, 'P'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili')),
- (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili') AND player_id = (SELECT id FROM player WHERE name = 'Stefano' AND surname = 'Greco')), true, 'D'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili')),
- (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili') AND player_id = (SELECT id FROM player WHERE name = 'Riccardo' AND surname = 'Barbieri')), true, 'C');
+                                                                        ((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili')),
+                                                                         (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili') AND player_id = (SELECT id FROM player WHERE name = 'Andrea' AND surname = 'Marino')), true, 'P'),
+                                                                        ((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili')),
+                                                                         (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili') AND player_id = (SELECT id FROM player WHERE name = 'Stefano' AND surname = 'Greco')), true, 'D'),
+                                                                        ((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili')),
+                                                                         (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'Gli Invincibili') AND player_id = (SELECT id FROM player WHERE name = 'Riccardo' AND surname = 'Barbieri')), true, 'C');
 
 -- FC Imbattibili: 2 titolari + 1 riserva (3 giocatori disponibili)
 INSERT INTO lineup_player (lineup_id, player_id, starter, position) VALUES
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')),
- (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili') AND player_id = (SELECT id FROM player WHERE name = 'Marco' AND surname = 'Villa')), true, 'P'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')),
- (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili') AND player_id = (SELECT id FROM player WHERE name = 'Gabriele' AND surname = 'Costa')), true, 'A'),
-((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')),
- (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili') AND player_id = (SELECT id FROM player WHERE name = 'Luca' AND surname = 'Rinaldi')), false, 'D');
+                                                                        ((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')),
+                                                                         (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili') AND player_id = (SELECT id FROM player WHERE name = 'Marco' AND surname = 'Villa')), true, 'P'),
+                                                                        ((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')),
+                                                                         (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili') AND player_id = (SELECT id FROM player WHERE name = 'Gabriele' AND surname = 'Costa')), true, 'A'),
+                                                                        ((SELECT id FROM lineup WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili')),
+                                                                         (SELECT id FROM team_player WHERE team_id = (SELECT id FROM team WHERE name = 'FC Imbattibili') AND player_id = (SELECT id FROM player WHERE name = 'Luca' AND surname = 'Rinaldi')), false, 'D');
 
 -- ---------------------------------------------------------------------
 -- trade: una per stato (PENDING / ACCEPTED / REJECTED), con importi che
