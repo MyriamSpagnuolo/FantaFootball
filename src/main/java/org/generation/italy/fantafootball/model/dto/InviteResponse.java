@@ -8,6 +8,7 @@ public record InviteResponse(
         Long id, Long leagueId, Long invitedByUserId, Long invitedUserId,
         String status, LocalDateTime sentDate, LocalDateTime responseDate
 ) {
+    //aggiungere spiegazione del metodo
     public static InviteResponse fromEntity(LeagueInvite invite) {
         return new InviteResponse(
                 invite.getId(),

@@ -11,6 +11,7 @@ public record CreateTeamRequest(
 
         @NotNull(message = "L'utente proprietario è obbligatorio")
         Long userId,
+        //da cambiare perchè nella creazione della lega non devo passare l'id dell'utente che la crea.
 
         @NotNull(message = "La lega è obbligatoria")
         Long leagueId
