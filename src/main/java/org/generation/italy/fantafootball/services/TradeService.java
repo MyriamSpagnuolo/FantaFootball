@@ -3,7 +3,9 @@ package org.generation.italy.fantafootball.services;
 import org.generation.italy.fantafootball.model.dto.TradeDto;
 import org.generation.italy.fantafootball.model.entities.TradeStatus;
 import org.generation.italy.fantafootball.model.repositories.TradeRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -39,7 +41,20 @@ public class TradeService {
                 .toList();
     }
 
-    public void deleteTradeById(Long id){
+    public void deleteTradeById(Long id, Long userId){
+        var trade = tradeRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trade not found"));
+
+        boolean belongsToUser = trade.getProposingTeam().getUser().getId().equals(userId)
+                || trade.getReceivingTeam().getUser().getId().equals(userId);
+
+        if (!belongsToUser) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "You are not allowed to delete this trade");
+        }
+
         tradeRepository.deleteById(id);
     }
+
+
 }

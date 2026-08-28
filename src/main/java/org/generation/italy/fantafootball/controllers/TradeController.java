@@ -35,8 +35,9 @@ public class TradeController {
     }
 
     @DeleteMapping("remove/{id}")
-    public void removeTradeRequestById(@PathVariable Long id) {
-        tradeService.deleteTradeById(id);
+    public void removeTradeRequestById(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        Number userId = jwt.getClaim("uid");
+        tradeService.deleteTradeById(id, userId.longValue());
     }
 
 
