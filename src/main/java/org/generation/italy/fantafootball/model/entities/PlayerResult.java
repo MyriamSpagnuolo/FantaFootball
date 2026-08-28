@@ -4,10 +4,9 @@ import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 
-// name/surname/real_team_name/real_team_shirt_num identificano il giocatore reale e sono
-// vincolati da FK composita a team_player (stessa quadrupla, unica su team_player).
-// Nessuna @ManyToOne verso TeamPlayer: qui teniamo solo le colonne scalari corrispondenti,
-// senza aggiungere una relazione objectuale finche' non serve davvero.
+// Un risultato e' unico per (player_id, matchday_id) nell'intero sistema:
+// arriva dal servizio esterno agganciato al giocatore reale, condiviso da
+// tutte le leghe che lo possiedono, non duplicato per lega.
 @Entity
 @Table(name = "player_results")
 public class PlayerResult {
@@ -22,17 +21,13 @@ public class PlayerResult {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "name", nullable = false)
-    private String name;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "player_id", nullable = false)
+    private Player player;
 
-    @Column(name = "surname", nullable = false)
-    private String surname;
-
-    @Column(name = "real_team_name", nullable = false)
-    private String realTeamName;
-
-    @Column(name = "real_team_shirt_num", nullable = false)
-    private int realTeamShirtNum;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "matchday_id", nullable = false)
+    private Matchday matchday;
 
     @Column(name = "rating")
     private BigDecimal rating;
@@ -71,36 +66,20 @@ public class PlayerResult {
         return id;
     }
 
-    public String getName() {
-        return name;
+    public Player getPlayer() {
+        return player;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setPlayer(Player player) {
+        this.player = player;
     }
 
-    public String getSurname() {
-        return surname;
+    public Matchday getMatchday() {
+        return matchday;
     }
 
-    public void setSurname(String surname) {
-        this.surname = surname;
-    }
-
-    public String getRealTeamName() {
-        return realTeamName;
-    }
-
-    public void setRealTeamName(String realTeamName) {
-        this.realTeamName = realTeamName;
-    }
-
-    public int getRealTeamShirtNum() {
-        return realTeamShirtNum;
-    }
-
-    public void setRealTeamShirtNum(int realTeamShirtNum) {
-        this.realTeamShirtNum = realTeamShirtNum;
+    public void setMatchday(Matchday matchday) {
+        this.matchday = matchday;
     }
 
     public BigDecimal getRating() {

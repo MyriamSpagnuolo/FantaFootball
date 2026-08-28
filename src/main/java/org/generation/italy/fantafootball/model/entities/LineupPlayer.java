@@ -14,6 +14,11 @@ public class LineupPlayer {
     @JoinColumn(name = "lineup_id", nullable = false)
     private Lineup lineup;
 
+    @ManyToOne(optional = false)
+    @MapsId("playerId")
+    @JoinColumn(name = "player_id", nullable = false)
+    private TeamPlayer teamPlayer;
+
     @Column(name = "starter", nullable = false)
     private boolean starter = true;
 
@@ -23,10 +28,11 @@ public class LineupPlayer {
     public LineupPlayer() {
     }
 
-    public LineupPlayer(Lineup lineup, Integer playerId, boolean starter) {
+    public LineupPlayer(Lineup lineup, TeamPlayer teamPlayer, boolean starter) {
         this.lineup = lineup;
+        this.teamPlayer = teamPlayer;
         this.starter = starter;
-        this.id = new LineupPlayerId(lineup.getId(), playerId);
+        this.id = new LineupPlayerId(lineup.getId(), teamPlayer.getId());
     }
 
     public LineupPlayerId getId() {
@@ -42,12 +48,17 @@ public class LineupPlayer {
         this.id.setLineupId(lineup != null ? lineup.getId() : null);
     }
 
-    public Integer getPlayerId() {
-        return id.getPlayerId();
+    public TeamPlayer getTeamPlayer() {
+        return teamPlayer;
     }
 
-    public void setPlayerId(Integer playerId) {
-        this.id.setPlayerId(playerId);
+    public void setTeamPlayer(TeamPlayer teamPlayer) {
+        this.teamPlayer = teamPlayer;
+        this.id.setPlayerId(teamPlayer != null ? teamPlayer.getId() : null);
+    }
+
+    public Long getPlayerId() {
+        return id.getPlayerId();
     }
 
     public boolean isStarter() {

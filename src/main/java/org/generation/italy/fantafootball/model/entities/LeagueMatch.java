@@ -26,6 +26,15 @@ public class LeagueMatch {
     @Column(name = "match_day", nullable = false)
     private LocalDateTime matchDay;
 
+    // Giornata reale di campionato che fornisce i player_results per calcolare questo scontro.
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "matchday_id", nullable = false)
+    private Matchday matchday;
+
+    // Giornata relativa alla lega (parte da 1 alla nascita della lega, indipendente da matchday.number).
+    @Column(name = "round_number", nullable = false)
+    private int roundNumber;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "home_team_id", nullable = false)
     private Team homeTeam;
@@ -49,11 +58,13 @@ public class LeagueMatch {
     public LeagueMatch() {
     }
 
-    public LeagueMatch(League league, LocalDateTime matchDay, Team homeTeam, Team awayTeam) {
+    public LeagueMatch(League league, LocalDateTime matchDay, Team homeTeam, Team awayTeam, Matchday matchday, int roundNumber) {
         this.league = league;
         this.matchDay = matchDay;
         this.homeTeam = homeTeam;
         this.awayTeam = awayTeam;
+        this.matchday = matchday;
+        this.roundNumber = roundNumber;
     }
 
     public Long getId() {
@@ -74,6 +85,22 @@ public class LeagueMatch {
 
     public void setMatchDay(LocalDateTime matchDay) {
         this.matchDay = matchDay;
+    }
+
+    public Matchday getMatchday() {
+        return matchday;
+    }
+
+    public void setMatchday(Matchday matchday) {
+        this.matchday = matchday;
+    }
+
+    public int getRoundNumber() {
+        return roundNumber;
+    }
+
+    public void setRoundNumber(int roundNumber) {
+        this.roundNumber = roundNumber;
     }
 
     public Team getHomeTeam() {
