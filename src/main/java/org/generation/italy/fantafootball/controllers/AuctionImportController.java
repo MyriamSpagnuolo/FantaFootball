@@ -1,37 +1,37 @@
 package org.generation.italy.fantafootball.controllers;
 
-import jakarta.validation.Valid;
-import org.generation.italy.fantafootball.model.dto.AuctionRosterImportRequest;
 import org.generation.italy.fantafootball.services.ExternalAuctionImportService;
+import org.generation.italy.fantafootball.model.dto.PurchasePlayerRequest;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-
-
 @RestController
 @RequestMapping("/api/leagues/{leagueId}/teams/{teamId}")
-public class ExternalAuctionImportController {
+public class AuctionImportController {
     private final ExternalAuctionImportService importService;
 
-    public ExternalAuctionImportController(ExternalAuctionImportService service) {
+    public AuctionImportController(ExternalAuctionImportService service) {
         this.importService = service;
     }
 
-    @PostMapping("/players/import")
+    @PostMapping("/player/{playerId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void importRoster(
+    public void importPlayer(
             @PathVariable Long leagueId,
             @PathVariable Long teamId,
-            @Valid @RequestBody AuctionRosterImportRequest request,
+            @PathVariable Long playerId,
+            @Valid @RequestBody PurchasePlayerRequest request,
             @AuthenticationPrincipal Jwt jwt) {
         Long authenticatedUserId = getAuthenticatedUserId(jwt);
-         importService.importRoster(
+         importService.importPlayer(
                  leagueId,
                  teamId,
                  authenticatedUserId,
+                 playerId,
                  request
          );
     }

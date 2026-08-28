@@ -26,9 +26,9 @@ SET default_table_access_method = heap;
 --
 
 CREATE TABLE public.app_user_roles (
-    user_id bigint NOT NULL,
-    role character varying(20) NOT NULL,
-    CONSTRAINT ck_app_user_roles_role CHECK (((role)::text = ANY ((ARRAY['ADMIN'::character varying, 'USER'::character varying])::text[])))
+                                       user_id bigint NOT NULL,
+                                       role character varying(20) NOT NULL,
+                                       CONSTRAINT ck_app_user_roles_role CHECK (((role)::text = ANY ((ARRAY['ADMIN'::character varying, 'USER'::character varying])::text[])))
 );
 
 
@@ -49,12 +49,12 @@ CREATE SEQUENCE public.seq_app_users_user_id
 --
 
 CREATE TABLE public.app_users (
-    user_id bigint DEFAULT nextval('public.seq_app_users_user_id'::regclass) NOT NULL,
-    username character varying(80) NOT NULL,
-    password_hash character varying(120) NOT NULL,
-    enabled boolean DEFAULT true NOT NULL,
-    CONSTRAINT ck_app_users_password_hash_not_blank CHECK ((btrim((password_hash)::text) <> ''::text)),
-    CONSTRAINT ck_app_users_username_not_blank CHECK ((btrim((username)::text) <> ''::text))
+                                  user_id bigint DEFAULT nextval('public.seq_app_users_user_id'::regclass) NOT NULL,
+                                  username character varying(80) NOT NULL,
+                                  password_hash character varying(120) NOT NULL,
+                                  enabled boolean DEFAULT true NOT NULL,
+                                  CONSTRAINT ck_app_users_password_hash_not_blank CHECK ((btrim((password_hash)::text) <> ''::text)),
+                                  CONSTRAINT ck_app_users_username_not_blank CHECK ((btrim((username)::text) <> ''::text))
 );
 
 
@@ -75,12 +75,12 @@ CREATE SEQUENCE public.seq_league_id
 --
 
 CREATE TABLE public.league (
-    id bigint DEFAULT nextval('public.seq_league_id'::regclass) NOT NULL,
-    name character varying(100) NOT NULL,
-    invite_code character varying(20) NOT NULL,
-    admin_user_id bigint NOT NULL,
-    creation_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    budget integer NOT NULL
+                               id bigint DEFAULT nextval('public.seq_league_id'::regclass) NOT NULL,
+                               name character varying(100) NOT NULL,
+                               invite_code character varying(20) NOT NULL,
+                               admin_user_id bigint NOT NULL,
+                               creation_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                               budget integer NOT NULL
 );
 
 
@@ -101,15 +101,15 @@ CREATE SEQUENCE public.seq_league_invite_id
 --
 
 CREATE TABLE public.league_invite (
-    id bigint DEFAULT nextval('public.seq_league_invite_id'::regclass) NOT NULL,
-    league_id bigint NOT NULL,
-    invited_by_user_id bigint NOT NULL,
-    invited_user_id bigint NOT NULL,
-    status character varying(20) NOT NULL,
-    sent_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    response_date timestamp without time zone,
-    CONSTRAINT chk_league_invite_different CHECK ((invited_by_user_id <> invited_user_id)),
-    CONSTRAINT chk_league_invite_status CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'ACCEPTED'::character varying, 'DECLINED'::character varying, 'EXPIRED'::character varying])::text[])))
+                                      id bigint DEFAULT nextval('public.seq_league_invite_id'::regclass) NOT NULL,
+                                      league_id bigint NOT NULL,
+                                      invited_by_user_id bigint NOT NULL,
+                                      invited_user_id bigint NOT NULL,
+                                      status character varying(20) NOT NULL,
+                                      sent_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                                      response_date timestamp without time zone,
+                                      CONSTRAINT chk_league_invite_different CHECK ((invited_by_user_id <> invited_user_id)),
+                                      CONSTRAINT chk_league_invite_status CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'ACCEPTED'::character varying, 'DECLINED'::character varying, 'EXPIRED'::character varying])::text[])))
 );
 
 
@@ -130,17 +130,17 @@ CREATE SEQUENCE public.seq_league_match_id
 --
 
 CREATE TABLE public.league_match (
-    id bigint DEFAULT nextval('public.seq_league_match_id'::regclass) NOT NULL,
-    league_id bigint NOT NULL,
-    home_team_id bigint NOT NULL,
-    away_team_id bigint NOT NULL,
-    home_score numeric(5,2),
-    away_score numeric(5,2),
-    home_goals integer,
-    away_goals integer,
-    match_day timestamp without time zone NOT NULL,
-    matchday_id bigint NOT NULL,
-    round_number integer NOT NULL
+                                     id bigint DEFAULT nextval('public.seq_league_match_id'::regclass) NOT NULL,
+                                     league_id bigint NOT NULL,
+                                     home_team_id bigint NOT NULL,
+                                     away_team_id bigint NOT NULL,
+                                     home_score numeric(5,2),
+                                     away_score numeric(5,2),
+                                     home_goals integer,
+                                     away_goals integer,
+                                     match_day timestamp without time zone NOT NULL,
+                                     matchday_id bigint NOT NULL,
+                                     round_number integer NOT NULL
 );
 
 
@@ -161,11 +161,11 @@ CREATE SEQUENCE public.seq_lineup_id
 --
 
 CREATE TABLE public.lineup (
-    id bigint DEFAULT nextval('public.seq_lineup_id'::regclass) NOT NULL,
-    team_id bigint NOT NULL,
-    league_match_id bigint NOT NULL,
-    is_defensive boolean NOT NULL,
-    lineup_type_id bigint NOT NULL
+                               id bigint DEFAULT nextval('public.seq_lineup_id'::regclass) NOT NULL,
+                               team_id bigint NOT NULL,
+                               league_match_id bigint NOT NULL,
+                               is_defensive boolean NOT NULL,
+                               lineup_type_id bigint NOT NULL
 );
 
 
@@ -174,10 +174,10 @@ CREATE TABLE public.lineup (
 --
 
 CREATE TABLE public.lineup_player (
-    lineup_id bigint NOT NULL,
-    player_id bigint NOT NULL,
-    starter boolean DEFAULT true NOT NULL,
-    "position" character varying(20)
+                                      lineup_id bigint NOT NULL,
+                                      player_id bigint NOT NULL,
+                                      starter boolean DEFAULT true NOT NULL,
+                                      "position" character varying(20)
 );
 
 
@@ -186,10 +186,10 @@ CREATE TABLE public.lineup_player (
 --
 
 CREATE TABLE public.lineup_type (
-    id bigint NOT NULL,
-    defender_num integer NOT NULL,
-    midfielder_num integer NOT NULL,
-    foward_num integer NOT NULL
+                                    id bigint NOT NULL,
+                                    defender_num integer NOT NULL,
+                                    midfielder_num integer NOT NULL,
+                                    foward_num integer NOT NULL
 );
 
 
@@ -210,10 +210,10 @@ CREATE SEQUENCE public.seq_matchday_id
 --
 
 CREATE TABLE public.matchday (
-    id bigint DEFAULT nextval('public.seq_matchday_id'::regclass) NOT NULL,
-    number integer NOT NULL,
-    date date NOT NULL,
-    is_closed boolean DEFAULT false NOT NULL
+                                 id bigint DEFAULT nextval('public.seq_matchday_id'::regclass) NOT NULL,
+                                 number integer NOT NULL,
+                                 date date NOT NULL,
+                                 is_closed boolean DEFAULT false NOT NULL
 );
 
 
@@ -234,14 +234,14 @@ CREATE SEQUENCE public.seq_player_id
 --
 
 CREATE TABLE public.player (
-    id bigint DEFAULT nextval('public.seq_player_id'::regclass) NOT NULL,
-    external_id bigint NOT NULL,
-    name character varying NOT NULL,
-    surname character varying NOT NULL,
-    real_team_name character varying NOT NULL,
-    real_team_shirt_num integer NOT NULL,
-    price integer NOT NULL,
-    is_injured boolean NOT NULL
+                               id bigint DEFAULT nextval('public.seq_player_id'::regclass) NOT NULL,
+                               external_id bigint NOT NULL,
+                               name character varying NOT NULL,
+                               surname character varying NOT NULL,
+                               real_team_name character varying NOT NULL,
+                               real_team_shirt_num integer NOT NULL,
+                               price integer NOT NULL,
+                               is_injured boolean NOT NULL
 );
 
 
@@ -262,19 +262,19 @@ CREATE SEQUENCE public.seq_player_results_id
 --
 
 CREATE TABLE public.player_results (
-    id bigint DEFAULT nextval('public.seq_player_results_id'::regclass) NOT NULL,
-    player_id bigint NOT NULL,
-    rating numeric,
-    goal_num integer NOT NULL,
-    goal_conceded integer NOT NULL,
-    autogoal_num integer NOT NULL,
-    assist_num integer NOT NULL,
-    penalty_saved integer NOT NULL,
-    penalty_failed integer NOT NULL,
-    clean_sheet boolean,
-    yellow_card integer NOT NULL,
-    red_card boolean NOT NULL,
-    matchday_id bigint NOT NULL
+                                       id bigint DEFAULT nextval('public.seq_player_results_id'::regclass) NOT NULL,
+                                       player_id bigint NOT NULL,
+                                       rating numeric,
+                                       goal_num integer NOT NULL,
+                                       goal_conceded integer NOT NULL,
+                                       autogoal_num integer NOT NULL,
+                                       assist_num integer NOT NULL,
+                                       penalty_saved integer NOT NULL,
+                                       penalty_failed integer NOT NULL,
+                                       clean_sheet boolean,
+                                       yellow_card integer NOT NULL,
+                                       red_card boolean NOT NULL,
+                                       matchday_id bigint NOT NULL
 );
 
 
@@ -319,14 +319,14 @@ CREATE SEQUENCE public.seq_trade_id
 --
 
 CREATE TABLE public.team (
-    id bigint DEFAULT nextval('public.seq_team_id'::regclass) NOT NULL,
-    name character varying(100) NOT NULL,
-    user_id bigint NOT NULL,
-    league_id bigint NOT NULL,
-    budget integer DEFAULT 0 NOT NULL,
-    total_points integer DEFAULT 0 NOT NULL,
-    CONSTRAINT chk_budget CHECK ((budget >= 0)),
-    CONSTRAINT chk_points CHECK ((total_points >= 0))
+                             id bigint DEFAULT nextval('public.seq_team_id'::regclass) NOT NULL,
+                             name character varying(100) NOT NULL,
+                             user_id bigint NOT NULL,
+                             league_id bigint NOT NULL,
+                             budget integer DEFAULT 0 NOT NULL,
+                             total_points integer DEFAULT 0 NOT NULL,
+                             CONSTRAINT chk_budget CHECK ((budget >= 0)),
+                             CONSTRAINT chk_points CHECK ((total_points >= 0))
 );
 
 
@@ -335,14 +335,14 @@ CREATE TABLE public.team (
 --
 
 CREATE TABLE public.team_player (
-    id bigint DEFAULT nextval('public.seq_team_player_id'::regclass) NOT NULL,
-    team_id bigint NOT NULL,
-    league_id bigint NOT NULL,
-    player_id bigint NOT NULL,
-    purchase_date date NOT NULL,
-    transfer_date date,
-    purchase_price integer NOT NULL,
-    CONSTRAINT chk_purchase_price CHECK ((purchase_price >= 0))
+                                    id bigint DEFAULT nextval('public.seq_team_player_id'::regclass) NOT NULL,
+                                    team_id bigint NOT NULL,
+                                    league_id bigint NOT NULL,
+                                    player_id bigint NOT NULL,
+                                    purchase_date date NOT NULL,
+                                    transfer_date date,
+                                    purchase_price integer NOT NULL,
+                                    CONSTRAINT chk_purchase_price CHECK ((purchase_price >= 0))
 );
 
 
@@ -351,17 +351,17 @@ CREATE TABLE public.team_player (
 --
 
 CREATE TABLE public.trade (
-    id bigint DEFAULT nextval('public.seq_trade_id'::regclass) NOT NULL,
-    proposing_team_id bigint NOT NULL,
-    status character varying(20) NOT NULL,
-    proposal_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    trade_player_id bigint NOT NULL,
-    receiving_team_id bigint NOT NULL,
-    offered_player_id bigint NOT NULL,
-    amount integer,
-    CONSTRAINT chk_trade_different CHECK ((proposing_team_id <> receiving_team_id)),
-    CONSTRAINT chk_trade_players_different CHECK ((offered_player_id <> trade_player_id)),
-    CONSTRAINT chk_trade_status CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'ACCEPTED'::character varying, 'REJECTED'::character varying, 'CANCELLED'::character varying])::text[])))
+                              id bigint DEFAULT nextval('public.seq_trade_id'::regclass) NOT NULL,
+                              proposing_team_id bigint NOT NULL,
+                              status character varying(20) NOT NULL,
+                              proposal_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                              trade_player_id bigint NOT NULL,
+                              receiving_team_id bigint NOT NULL,
+                              offered_player_id bigint NOT NULL,
+                              amount integer,
+                              CONSTRAINT chk_trade_different CHECK ((proposing_team_id <> receiving_team_id)),
+                              CONSTRAINT chk_trade_players_different CHECK ((offered_player_id <> trade_player_id)),
+                              CONSTRAINT chk_trade_status CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'ACCEPTED'::character varying, 'REJECTED'::character varying, 'CANCELLED'::character varying])::text[])))
 );
 
 
