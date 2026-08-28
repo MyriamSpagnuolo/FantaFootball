@@ -85,6 +85,35 @@ CREATE TABLE public.league (
 
 
 --
+-- Name: seq_league_invite_id; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.seq_league_invite_id
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: league_invite; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.league_invite (
+    id bigint DEFAULT nextval('public.seq_league_invite_id'::regclass) NOT NULL,
+    league_id bigint NOT NULL,
+    invited_by_user_id bigint NOT NULL,
+    invited_user_id bigint NOT NULL,
+    status character varying(20) NOT NULL,
+    sent_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    response_date timestamp without time zone,
+    CONSTRAINT chk_league_invite_different CHECK ((invited_by_user_id <> invited_user_id)),
+    CONSTRAINT chk_league_invite_status CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'ACCEPTED'::character varying, 'DECLINED'::character varying, 'EXPIRED'::character varying])::text[])))
+);
+
+
+--
 -- Name: seq_league_match_id; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -361,6 +390,14 @@ ALTER TABLE ONLY public.league
 
 
 --
+-- Name: league_invite league_invite_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.league_invite
+    ADD CONSTRAINT league_invite_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: lineup lineup_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -497,6 +534,15 @@ ALTER TABLE ONLY public.team
 
 
 --
+-- Name: team uq_team_user_league; Type: CONSTRAINT; Schema: public; Owner: -
+--
+-- Un utente puo' avere al piu' un team per lega (ma team in leghe diverse).
+
+ALTER TABLE ONLY public.team
+    ADD CONSTRAINT uq_team_user_league UNIQUE (user_id, league_id);
+
+
+--
 -- Name: ux_app_users_username_lower; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -513,6 +559,14 @@ CREATE UNIQUE INDEX ux_team_player_active_per_league ON public.team_player USING
 
 
 --
+-- Name: ux_league_invite_pending_unique; Type: INDEX; Schema: public; Owner: -
+--
+-- Al piu' un invito PENDING per (lega, utente invitato): evita inviti duplicati.
+
+CREATE UNIQUE INDEX ux_league_invite_pending_unique ON public.league_invite USING btree (league_id, invited_user_id) WHERE ((status)::text = 'PENDING'::text);
+
+
+--
 -- Name: app_user_roles fk_app_user_roles_user; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -526,6 +580,30 @@ ALTER TABLE ONLY public.app_user_roles
 
 ALTER TABLE ONLY public.league
     ADD CONSTRAINT fk_league_admin FOREIGN KEY (admin_user_id) REFERENCES public.app_users(user_id) ON DELETE RESTRICT;
+
+
+--
+-- Name: league_invite fk_li_invited_by; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.league_invite
+    ADD CONSTRAINT fk_li_invited_by FOREIGN KEY (invited_by_user_id) REFERENCES public.app_users(user_id) ON DELETE RESTRICT;
+
+
+--
+-- Name: league_invite fk_li_invited_user; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.league_invite
+    ADD CONSTRAINT fk_li_invited_user FOREIGN KEY (invited_user_id) REFERENCES public.app_users(user_id) ON DELETE CASCADE;
+
+
+--
+-- Name: league_invite fk_li_league; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.league_invite
+    ADD CONSTRAINT fk_li_league FOREIGN KEY (league_id) REFERENCES public.league(id) ON DELETE CASCADE;
 
 
 --

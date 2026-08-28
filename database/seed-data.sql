@@ -16,6 +16,7 @@ TRUNCATE TABLE
     app_user_roles,
     app_users,
     league,
+    league_invite,
     league_match,
     lineup,
     lineup_player,
@@ -30,6 +31,7 @@ TRUNCATE TABLE
 
 ALTER SEQUENCE seq_app_users_user_id RESTART WITH 1;
 ALTER SEQUENCE seq_league_id RESTART WITH 1;
+ALTER SEQUENCE seq_league_invite_id RESTART WITH 1;
 ALTER SEQUENCE seq_league_match_id RESTART WITH 1;
 ALTER SEQUENCE seq_lineup_id RESTART WITH 1;
 ALTER SEQUENCE seq_matchday_id RESTART WITH 1;
@@ -47,7 +49,8 @@ INSERT INTO app_users (username, password_hash, enabled) VALUES
 ('luigi.bianchi',  '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
 ('giovanni.verdi', '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
 ('anna.russo',     '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
-('paolo.ferrari',  '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true);
+('paolo.ferrari',  '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
+('sara.gallo',      '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true);
 
 INSERT INTO app_user_roles (user_id, role)
 SELECT user_id, 'USER' FROM app_users;
@@ -73,6 +76,29 @@ INSERT INTO team (name, user_id, league_id, budget, total_points) VALUES
 ('Gli Invincibili',      (SELECT user_id FROM app_users WHERE username = 'giovanni.verdi'), (SELECT id FROM league WHERE invite_code = 'LEGA2026'), 433, 38),
 ('FC Imbattibili',       (SELECT user_id FROM app_users WHERE username = 'anna.russo'),     (SELECT id FROM league WHERE invite_code = 'LEGA2026'), 419, 60),
 ('Atletico Fantacalcio', (SELECT user_id FROM app_users WHERE username = 'paolo.ferrari'),  (SELECT id FROM league WHERE invite_code = 'LEGA2026'), 433, 29);
+
+-- ---------------------------------------------------------------------
+-- league_invite: gli inviti ACCEPTED corrispondono ai 4 team creati dagli
+-- utenti invitati (mario.rossi e' l'admin che ha creato la lega, non
+-- serve un invito per il suo stesso team); sara.gallo ha invece un
+-- invito ancora PENDING, non fa parte di nessun team.
+-- ---------------------------------------------------------------------
+INSERT INTO league_invite (league_id, invited_by_user_id, invited_user_id, status, sent_date, response_date) VALUES
+((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
+ (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'luigi.bianchi'),
+ 'ACCEPTED', TIMESTAMP '2026-08-01 10:10:00', TIMESTAMP '2026-08-01 11:00:00'),
+((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
+ (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'giovanni.verdi'),
+ 'ACCEPTED', TIMESTAMP '2026-08-01 10:10:00', TIMESTAMP '2026-08-01 12:30:00'),
+((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
+ (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'anna.russo'),
+ 'ACCEPTED', TIMESTAMP '2026-08-01 10:10:00', TIMESTAMP '2026-08-01 09:15:00'),
+((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
+ (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'paolo.ferrari'),
+ 'ACCEPTED', TIMESTAMP '2026-08-01 10:10:00', TIMESTAMP '2026-08-01 14:20:00'),
+((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
+ (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'sara.gallo'),
+ 'PENDING', TIMESTAMP '2026-08-27 09:00:00', NULL);
 
 -- ---------------------------------------------------------------------
 -- player (anagrafica dei giocatori reali, come se arrivasse dal
