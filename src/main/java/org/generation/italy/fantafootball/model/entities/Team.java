@@ -3,7 +3,10 @@ package org.generation.italy.fantafootball.model.entities;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "team", uniqueConstraints = @UniqueConstraint(name = "uq_team_name_league", columnNames = {"name", "league_id"}))
+@Table(name = "team", uniqueConstraints = {
+        @UniqueConstraint(name = "uq_team_name_league", columnNames = {"name", "league_id"}),
+        @UniqueConstraint(name = "uq_team_user_league", columnNames = {"user_id", "league_id"})
+})
 public class Team {
 
     @Id
