@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 
+// Un risultato e' associato al giocatore reale, condiviso da tutte le leghe.
 // Un risultato e' unico per (player_id, matchday_id) nell'intero sistema:
 // arriva dal servizio esterno agganciato al giocatore reale, condiviso da
 // tutte le leghe che lo possiedono, non duplicato per lega.
