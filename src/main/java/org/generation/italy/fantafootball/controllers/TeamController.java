@@ -41,6 +41,13 @@ public class TeamController {
         }
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<?> getMyTeams(@AuthenticationPrincipal Jwt jwt) {
+        Number userId = jwt.getClaim("uid");
+        List<TeamResponse> teams = teamService.getMyTeams(userId.longValue());
+        return ResponseEntity.ok(teams);
+    }
+
     @PatchMapping("/{teamId}/name")
     public ResponseEntity<?> renameTeam(@PathVariable Long teamId,
                                          @Valid @RequestBody RenameTeamRequest request,
