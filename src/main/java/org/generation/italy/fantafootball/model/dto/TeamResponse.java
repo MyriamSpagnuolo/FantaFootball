@@ -7,6 +7,7 @@ public record TeamResponse(
         String name,
         Long userId,
         Long leagueId,
+        String leagueName,
         int budget,
         int totalPoints
 ) {
@@ -16,6 +17,7 @@ public record TeamResponse(
                 team.getName(),
                 team.getUser().getId(),
                 team.getLeague().getId(),
+                team.getLeague().getName(),
                 team.getBudget(),
                 team.getTotalPoints()
         );

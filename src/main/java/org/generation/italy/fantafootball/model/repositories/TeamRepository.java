@@ -12,6 +12,7 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     boolean existsByNameAndLeagueId(String name, Long leagueId);
     boolean existsByUserIdAndLeagueId(Long userId, Long leagueId);
     List<Team> findAllTeamByLeagueId(Long leagueId);
+    List<Team> findAllByUserId(Long userId);
     long countByLeagueId(Long leagueId);
 
     Optional<Team> findByIdAndUserId(Long teamId, Long userId);
