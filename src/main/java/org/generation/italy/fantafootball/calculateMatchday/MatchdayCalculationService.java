@@ -108,7 +108,7 @@ public class MatchdayCalculationService {
 
     private boolean samePosition(LineupPlayer first, LineupPlayer second) {
         return first.getPosition() != null
-                && first.getPosition().equalsIgnoreCase(second.getPosition());
+                && first.getPosition() == second.getPosition();
     }
 
     private record SubstitutionCandidate(LineupPlayer player, PlayerMatchStats stats) {

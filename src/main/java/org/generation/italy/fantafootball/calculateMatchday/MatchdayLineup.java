@@ -1,12 +1,13 @@
 package org.generation.italy.fantafootball.calculateMatchday;
 
 import org.generation.italy.fantafootball.model.entities.Lineup;
+import org.generation.italy.fantafootball.model.entities.PlayerRole;
 
 import java.util.List;
 import java.util.Set;
 
 public class MatchdayLineup {
-    private static final Set<String> VALID_POSITIONS = Set.of("P", "D", "C", "A");
+    private static final Set<PlayerRole> VALID_POSITIONS = Set.of(PlayerRole.values());
     private final Lineup lineup;
     private final List<PlayerMatchStats> players;
 
@@ -31,14 +32,14 @@ public class MatchdayLineup {
 
     public PlayerMatchStats getGoalkeeper() {
         return players.stream()
-                .filter(p -> isPosition(p, "P"))
+                .filter(p -> isPosition(p, PlayerRole.P))
                 .findFirst()
                 .orElse(null);
     }
 
     public void validate() {
         long goalkeepers = players.stream()
-                .filter(p -> "P".equalsIgnoreCase(p.getLineupPlayer().getPosition()))
+                .filter(p -> PlayerRole.P == p.getLineupPlayer().getPosition())
                 .count();
 
         if (goalkeepers > 1) {
@@ -47,25 +48,25 @@ public class MatchdayLineup {
 
         boolean invalidPosition = players.stream()
                 .anyMatch(p -> p.getLineupPlayer().getPosition() == null
-                        || !VALID_POSITIONS.contains(p.getLineupPlayer().getPosition().toUpperCase()));
+                        || !VALID_POSITIONS.contains(p.getLineupPlayer().getPosition()));
         if (invalidPosition) {
             throw new IllegalArgumentException("Every starting player must have a valid position");
         }
     }
 
     public List<PlayerMatchStats> getDefenders() {
-        return players.stream().filter(p -> isPosition(p, "D")).toList();
+        return players.stream().filter(p -> isPosition(p, PlayerRole.D)).toList();
     }
 
     public List<PlayerMatchStats> getMidfielders() {
-        return players.stream().filter(p -> isPosition(p, "C")).toList();
+        return players.stream().filter(p -> isPosition(p, PlayerRole.C)).toList();
     }
 
     public List<PlayerMatchStats> getForwards() {
-        return players.stream().filter(p -> isPosition(p, "A")).toList();
+        return players.stream().filter(p -> isPosition(p, PlayerRole.A)).toList();
     }
 
-    private boolean isPosition(PlayerMatchStats player, String expected) {
-        return expected.equalsIgnoreCase(player.getLineupPlayer().getPosition());
+    private boolean isPosition(PlayerMatchStats player, PlayerRole expected) {
+        return expected == player.getLineupPlayer().getPosition();
     }
 }
