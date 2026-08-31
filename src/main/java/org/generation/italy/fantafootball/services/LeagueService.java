@@ -32,11 +32,10 @@ public class LeagueService {
     }
 
     @Transactional
-    public LeagueResponse createLeague(CreateLeagueRequest request) {
-        Optional<AppUser> existingAdmin = appUserRepository.findById(request.adminUserId());
+    public LeagueResponse createLeague(CreateLeagueRequest request, Long adminUserId) {
+        Optional<AppUser> existingAdmin = appUserRepository.findById(adminUserId);
         if (existingAdmin.isEmpty()) {
-            throw new NotFoundException("USER_NOT_FOUND",
-                    "Utente non trovato: " + request.adminUserId());
+            throw new NotFoundException("USER_NOT_FOUND", "Utente non trovato: " + adminUserId);
         }
         AppUser admin = existingAdmin.get();
 
@@ -48,7 +47,7 @@ public class LeagueService {
 
         League savedLeague = leagueRepository.save(league);
 
-        String teamName = admin.getUsername() + "Nome Team";
+        String teamName = admin.getUsername() + "'s Team";
         Team adminTeam = new Team(teamName, admin, savedLeague);
         teamRepository.save(adminTeam);
 

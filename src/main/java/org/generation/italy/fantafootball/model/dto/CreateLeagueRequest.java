@@ -10,14 +10,8 @@ public record CreateLeagueRequest(
         @Size(max = 100, message = "Il nome non può superare 100 caratteri")
         String name,
 
-        @NotNull(message = "L'utente admin è obbligatorio")
-        Long adminUserId,
-        //da cambiare perchè nella creazione della lega non devo passare l'id dell'utente che la crea.
-
         @NotNull(message = "Il budget iniziale è obbligatorio")
         @Min(value = 0, message = "Il budget non può essere negativo")
         Integer budget
-
-
 ) {
 }

@@ -38,24 +38,25 @@ public class TeamService {
         this.leagueRepository = leagueRepository;
     }
 
-    public TeamResponse createTeam(CreateTeamRequest request) {
+    @Transactional
+    public TeamResponse createTeam(CreateTeamRequest request, Long userId) {
+        Optional<AppUser> existingUser = appUserRepository.findById(userId);
+        if (existingUser.isEmpty()) {
+            throw new NotFoundException("USER_NOT_FOUND", "Utente non trovato: " + userId);
+        }
+        AppUser user = existingUser.get();
+
         boolean duplicateName = teamRepository.existsByNameAndLeagueId(request.name(), request.leagueId());
         if (duplicateName) {
             throw new ConflictException("DUPLICATE_TEAM_NAME",
                     "Esiste già una squadra con questo nome in questa lega");
         }
 
-        boolean userAlreadyHasTeam = teamRepository.existsByUserIdAndLeagueId(request.userId(), request.leagueId());
+        boolean userAlreadyHasTeam = teamRepository.existsByUserIdAndLeagueId(userId, request.leagueId());
         if (userAlreadyHasTeam) {
             throw new ConflictException("USER_ALREADY_HAS_TEAM",
                     "Questo utente ha già una squadra in questa lega");
         }
-
-        Optional<AppUser> existingUser = appUserRepository.findById(request.userId());
-        if (existingUser.isEmpty()) {
-            throw new NotFoundException("USER_NOT_FOUND", "Utente non trovato: " + request.userId());
-        }
-        AppUser user = existingUser.get();
 
         Optional<League> existingLeague = leagueRepository.findById(request.leagueId());
         if (existingLeague.isEmpty()) {
