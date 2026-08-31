@@ -45,12 +45,12 @@ ALTER SEQUENCE seq_trade_id RESTART WITH 1;
 -- app_users / app_user_roles
 -- ---------------------------------------------------------------------
 INSERT INTO app_users (username, password_hash, enabled) VALUES
-('mario.rossi',    '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
-('luigi.bianchi',  '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
-('giovanni.verdi', '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
-('anna.russo',     '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
-('paolo.ferrari',  '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
-('sara.gallo',      '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true);
+                                                             ('mario.rossi',    '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
+                                                             ('luigi.bianchi',  '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
+                                                             ('giovanni.verdi', '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
+                                                             ('anna.russo',     '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
+                                                             ('paolo.ferrari',  '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
+                                                             ('sara.gallo',      '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true);
 
 INSERT INTO app_user_roles (user_id, role)
 SELECT user_id, 'USER' FROM app_users;
@@ -84,21 +84,21 @@ INSERT INTO team (name, user_id, league_id, budget, total_points) VALUES
 -- invito ancora PENDING, non fa parte di nessun team.
 -- ---------------------------------------------------------------------
 INSERT INTO league_invite (league_id, invited_by_user_id, invited_user_id, status, sent_date, response_date) VALUES
-((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
- (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'luigi.bianchi'),
- 'ACCEPTED', TIMESTAMP '2026-08-01 10:10:00', TIMESTAMP '2026-08-01 11:00:00'),
-((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
- (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'giovanni.verdi'),
- 'ACCEPTED', TIMESTAMP '2026-08-01 10:10:00', TIMESTAMP '2026-08-01 12:30:00'),
-((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
- (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'anna.russo'),
- 'ACCEPTED', TIMESTAMP '2026-08-01 10:10:00', TIMESTAMP '2026-08-01 09:15:00'),
-((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
- (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'paolo.ferrari'),
- 'ACCEPTED', TIMESTAMP '2026-08-01 10:10:00', TIMESTAMP '2026-08-01 14:20:00'),
-((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
- (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'sara.gallo'),
- 'PENDING', TIMESTAMP '2026-08-27 09:00:00', NULL);
+                                                                                                                 ((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
+                                                                                                                  (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'luigi.bianchi'),
+                                                                                                                  'ACCEPTED', TIMESTAMP '2026-08-01 10:10:00', TIMESTAMP '2026-08-01 11:00:00'),
+                                                                                                                 ((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
+                                                                                                                  (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'giovanni.verdi'),
+                                                                                                                  'ACCEPTED', TIMESTAMP '2026-08-01 10:10:00', TIMESTAMP '2026-08-01 12:30:00'),
+                                                                                                                 ((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
+                                                                                                                  (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'anna.russo'),
+                                                                                                                  'ACCEPTED', TIMESTAMP '2026-08-01 10:10:00', TIMESTAMP '2026-08-01 09:15:00'),
+                                                                                                                 ((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
+                                                                                                                  (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'paolo.ferrari'),
+                                                                                                                  'ACCEPTED', TIMESTAMP '2026-08-01 10:10:00', TIMESTAMP '2026-08-01 14:20:00'),
+                                                                                                                 ((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
+                                                                                                                  (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'sara.gallo'),
+                                                                                                                  'PENDING', TIMESTAMP '2026-08-27 09:00:00', NULL);
 
 -- ---------------------------------------------------------------------
 -- player (anagrafica dei giocatori reali, come se arrivasse dal
@@ -107,22 +107,22 @@ INSERT INTO league_invite (league_id, invited_by_user_id, invited_user_id, statu
 -- Condivisa da tutte le leghe: nessun riferimento a team/lega qui.)
 -- ---------------------------------------------------------------------
 INSERT INTO player (external_id, name, surname, real_team_name, real_team_shirt_num, price, is_injured) VALUES
-(1001, 'Alessandro', 'Ferri',      'Juventus',   1,  22, false),
-(1002, 'Davide',     'Conti',      'Inter',      4,  35, false),
-(1003, 'Matteo',     'Galli',      'Milan',      8,  28, true),
-(1004, 'Simone',     'Riva',       'Napoli',     9,  45, false),
-(1005, 'Federico',   'Moretti',    'Roma',       1,  20, false),
-(1006, 'Lorenzo',    'Bruno',      'Atalanta',   5,  30, false),
-(1007, 'Nicolo',     'Fontana',    'Fiorentina', 10, 38, false),
-(1008, 'Andrea',     'Marino',     'Lazio',      1,  19, false),
-(1009, 'Stefano',    'Greco',      'Torino',     3,  24, false),
-(1010, 'Riccardo',   'Barbieri',   'Bologna',    7,  33, false),
-(1011, 'Marco',      'Villa',      'Juventus',   22, 21, false),
-(1012, 'Luca',       'Rinaldi',    'Inter',      13, 27, false),
-(1013, 'Gabriele',   'Costa',      'Milan',      11, 42, false),
-(1014, 'Emanuele',   'Longo',      'Napoli',     1,  18, false),
-(1015, 'Tommaso',    'Gatti',      'Roma',       6,  26, false),
-(1016, 'Filippo',    'De Angelis', 'Atalanta',   17, 31, false);
+                                                                                                            (1001, 'Alessandro', 'Ferri',      'Juventus',   1,  22, false),
+                                                                                                            (1002, 'Davide',     'Conti',      'Inter',      4,  35, false),
+                                                                                                            (1003, 'Matteo',     'Galli',      'Milan',      8,  28, true),
+                                                                                                            (1004, 'Simone',     'Riva',       'Napoli',     9,  45, false),
+                                                                                                            (1005, 'Federico',   'Moretti',    'Roma',       1,  20, false),
+                                                                                                            (1006, 'Lorenzo',    'Bruno',      'Atalanta',   5,  30, false),
+                                                                                                            (1007, 'Nicolo',     'Fontana',    'Fiorentina', 10, 38, false),
+                                                                                                            (1008, 'Andrea',     'Marino',     'Lazio',      1,  19, false),
+                                                                                                            (1009, 'Stefano',    'Greco',      'Torino',     3,  24, false),
+                                                                                                            (1010, 'Riccardo',   'Barbieri',   'Bologna',    7,  33, false),
+                                                                                                            (1011, 'Marco',      'Villa',      'Juventus',   22, 21, false),
+                                                                                                            (1012, 'Luca',       'Rinaldi',    'Inter',      13, 27, false),
+                                                                                                            (1013, 'Gabriele',   'Costa',      'Milan',      11, 42, false),
+                                                                                                            (1014, 'Emanuele',   'Longo',      'Napoli',     1,  18, false),
+                                                                                                            (1015, 'Tommaso',    'Gatti',      'Roma',       6,  26, false),
+                                                                                                            (1016, 'Filippo',    'De Angelis', 'Atalanta',   17, 31, false);
 
 -- ---------------------------------------------------------------------
 -- team_player (rosa di ogni squadra: possesso di un player in una lega.
