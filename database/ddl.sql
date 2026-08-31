@@ -253,7 +253,7 @@ CREATE TABLE public.player (
                                real_team_shirt_num integer NOT NULL,
                                price integer NOT NULL,
                                is_injured boolean NOT NULL,
-                               "position" character varying(1) NOT NULL,
+                               "position" character(1) NOT NULL,
                                CONSTRAINT ck_player_position CHECK ((("position")::text = ANY ((ARRAY['P'::character varying, 'D'::character varying, 'C'::character varying, 'A'::character varying])::text[])))
 );
 
