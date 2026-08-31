@@ -66,7 +66,7 @@ public class LineupPlayer {
         this.starter = starter;
     }
 
-    public String getPosition() {
+    public PlayerRole getPosition() {
         return teamPlayer != null ? teamPlayer.getPlayer().getPosition() : null;
     }
 }

@@ -103,7 +103,8 @@ INSERT INTO league_invite (league_id, invited_by_user_id, invited_user_id, statu
 -- ---------------------------------------------------------------------
 -- player (anagrafica dei giocatori reali, come se arrivasse dal
 -- simulatore esterno: external_id e' la chiave lato simulatore, price e'
--- la quotazione di mercato corrente, is_injured lo stato infortunio.
+-- la quotazione di mercato corrente, is_injured lo stato infortunio,
+-- position il ruolo (P=portiere, D=difensore, C=centrocampista, A=attaccante).
 -- Condivisa da tutte le leghe: nessun riferimento a team/lega qui.)
 -- ---------------------------------------------------------------------
 INSERT INTO player (external_id, name, surname, real_team_name, real_team_shirt_num, price, is_injured, position) VALUES

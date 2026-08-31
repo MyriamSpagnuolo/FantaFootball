@@ -36,14 +36,15 @@ public class Player {
     @Column(name = "is_injured", nullable = false)
     private boolean injured;
 
-    @Column(name = "position", length = 20, nullable = false)
-    private String position;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "position", length = 1, nullable = false)
+    private PlayerRole position;
 
     public Player() {
     }
 
     public Player(Long externalId, String name, String surname, String realTeamName, int realTeamShirtNum,
-                  int price, boolean injured, String position) {
+                  int price, boolean injured, PlayerRole position) {
         this.externalId = externalId;
         this.name = name;
         this.surname = surname;
@@ -114,11 +115,11 @@ public class Player {
         this.injured = injured;
     }
 
-    public String getPosition() {
+    public PlayerRole getPosition() {
         return position;
     }
 
-    public void setPosition(String position) {
+    public void setPosition(PlayerRole position) {
         this.position = position;
     }
 }
