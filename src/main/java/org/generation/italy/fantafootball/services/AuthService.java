@@ -61,7 +61,7 @@ public class AuthService {
         if (request.password() == null || request.password().isBlank()) {
             throw new BadRequestException("invalid_request", "Password is required");
         }
-        if (appUserRepository.existsByUsername(request.username())) {
+        if (appUserRepository.existsByUsernameIgnoreCase(request.username())) {
             throw new ConflictException("username_unavailable", "Username already exists: " + request.username());
         }
         if (appUserRepository.existsByEmailIgnoreCase(request.email())) {

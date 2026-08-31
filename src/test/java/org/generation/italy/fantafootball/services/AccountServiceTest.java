@@ -70,4 +70,35 @@ class AccountServiceTest {
 
         assertTrue(user.isEnabled());
     }
+
+    @Test
+    void updateUsernameChangesUsernameAndRevokesExistingTokens() {
+        AppUser user = new AppUser();
+        user.setUsername("old.username");
+        user.setPasswordHash("encoded-password");
+        when(appUserRepository.findById(7L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("Password1!", "encoded-password")).thenReturn(true);
+        when(appUserRepository.existsByUsernameIgnoreCaseAndIdNot("new.username", 7L)).thenReturn(false);
+
+        accountService.updateUsername(7L, " new.username ", "Password1!");
+
+        assertEquals("new.username", user.getUsername());
+        assertEquals(1, user.getTokenVersion());
+        verify(appUserRepository).saveAndFlush(user);
+    }
+
+    @Test
+    void changePasswordEncodesPasswordAndRevokesExistingTokens() {
+        AppUser user = new AppUser();
+        user.setPasswordHash("old-hash");
+        when(appUserRepository.findById(7L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("CurrentPassword1!", "old-hash")).thenReturn(true);
+        when(passwordEncoder.matches("NewPassword123!", "old-hash")).thenReturn(false);
+        when(passwordEncoder.encode("NewPassword123!")).thenReturn("new-hash");
+
+        accountService.changePassword(7L, "CurrentPassword1!", "NewPassword123!");
+
+        assertEquals("new-hash", user.getPasswordHash());
+        assertEquals(1, user.getTokenVersion());
+    }
 }
