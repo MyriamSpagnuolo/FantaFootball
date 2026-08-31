@@ -73,10 +73,10 @@ class TeamMatchStatsTest {
         assertEquals(12.0, new TeamMatchStats().calculateFantaRatingLineup(effectiveLineup));
     }
 
-    private static PlayerMatchStats player(String position, double vote) {
+    private static PlayerMatchStats player(String role, double vote) {
         LineupPlayer lineupPlayer = mock(LineupPlayer.class);
         when(lineupPlayer.isStarter()).thenReturn(true);
-        when(lineupPlayer.getPosition()).thenReturn(org.generation.italy.fantafootball.model.entities.PlayerRole.valueOf(position));
+        when(lineupPlayer.getRole()).thenReturn(org.generation.italy.fantafootball.model.entities.PlayerRole.valueOf(role));
 
         PlayerMatchStats stats = mock(PlayerMatchStats.class);
         when(stats.getLineupPlayer()).thenReturn(lineupPlayer);

@@ -68,10 +68,10 @@ public class MatchdayCalculationService {
             }
 
             // Le sostituzioni sono per ruolo e rispettano l'ordine della panchina
-            // restituito dalla lineup. Un giocatore può entrare una sola volta.
+            // restituito dalla lineup. Un giocatore deve entrare una sola volta.
             substitutes.stream()
                     .filter(substitute -> !usedPlayers.contains(substitute.getPlayerId()))
-                    .filter(substitute -> samePosition(starter, substitute))
+                    .filter(substitute -> sameRole(starter, substitute))
                     .map(substitute -> toPlayedMatchStats(lineup, substitute)
                             .map(stats -> new SubstitutionCandidate(substitute, stats)))
                     .flatMap(Optional::stream)
@@ -106,9 +106,9 @@ public class MatchdayCalculationService {
                 .map(playerResult -> new PlayerMatchStats(lineupPlayer, playerResult));
     }
 
-    private boolean samePosition(LineupPlayer first, LineupPlayer second) {
-        return first.getPosition() != null
-                && first.getPosition() == second.getPosition();
+    private boolean sameRole(LineupPlayer first, LineupPlayer second) {
+        return first.getRole() != null
+                && first.getRole() == second.getRole();
     }
 
     private record SubstitutionCandidate(LineupPlayer player, PlayerMatchStats stats) {
