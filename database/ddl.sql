@@ -51,10 +51,22 @@ CREATE SEQUENCE public.seq_app_users_user_id
 CREATE TABLE public.app_users (
                                   user_id bigint DEFAULT nextval('public.seq_app_users_user_id'::regclass) NOT NULL,
                                   username character varying(80) NOT NULL,
+                                  email character varying(254) NOT NULL,
                                   password_hash character varying(120) NOT NULL,
                                   enabled boolean DEFAULT true NOT NULL,
+                                  token_version integer DEFAULT 0 NOT NULL,
                                   CONSTRAINT ck_app_users_password_hash_not_blank CHECK ((btrim((password_hash)::text) <> ''::text)),
                                   CONSTRAINT ck_app_users_username_not_blank CHECK ((btrim((username)::text) <> ''::text))
+);
+
+CREATE TABLE public.password_reset_token (
+    id uuid NOT NULL,
+    user_id bigint NOT NULL,
+    token_hash character varying(64) NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    used_at timestamp with time zone,
+    CONSTRAINT ck_password_reset_token_expiry CHECK (expires_at > created_at)
 );
 
 
@@ -485,6 +497,12 @@ ALTER TABLE ONLY public.trade
 ALTER TABLE ONLY public.app_users
     ADD CONSTRAINT uq_app_users_username UNIQUE (username);
 
+ALTER TABLE ONLY public.password_reset_token
+    ADD CONSTRAINT password_reset_token_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.password_reset_token
+    ADD CONSTRAINT uq_password_reset_token_hash UNIQUE (token_hash);
+
 
 --
 -- Name: league uq_league_code; Type: CONSTRAINT; Schema: public; Owner: -
@@ -549,6 +567,10 @@ ALTER TABLE ONLY public.team
 
 CREATE UNIQUE INDEX ux_app_users_username_lower ON public.app_users USING btree (lower((username)::text));
 
+CREATE UNIQUE INDEX ux_app_users_email_lower ON public.app_users USING btree (lower((email)::text));
+CREATE INDEX ix_password_reset_token_user_id ON public.password_reset_token USING btree (user_id);
+CREATE INDEX ix_password_reset_token_expires_at ON public.password_reset_token USING btree (expires_at);
+
 
 --
 -- Name: ux_team_player_active_per_league; Type: INDEX; Schema: public; Owner: -
@@ -573,6 +595,9 @@ CREATE UNIQUE INDEX ux_league_invite_pending_unique ON public.league_invite USIN
 
 ALTER TABLE ONLY public.app_user_roles
     ADD CONSTRAINT fk_app_user_roles_user FOREIGN KEY (user_id) REFERENCES public.app_users(user_id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.password_reset_token
+    ADD CONSTRAINT fk_password_reset_token_user FOREIGN KEY (user_id) REFERENCES public.app_users(user_id) ON DELETE CASCADE;
 
 
 --

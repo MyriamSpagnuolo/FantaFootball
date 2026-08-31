@@ -30,6 +30,7 @@ public class JwtService {
                 .expiresAt(expiresAt)
                 .subject(user.getUsername())
                 .claim("uid", user.getId())
+                .claim("tokenVersion", user.getTokenVersion())
                 .claim("roles", user.getRoles().stream().map(Enum::name).toList())
                 .build();
 
