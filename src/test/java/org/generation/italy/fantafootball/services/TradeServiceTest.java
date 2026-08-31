@@ -60,24 +60,13 @@ class TradeServiceTest {
         setId(proposer, 10L);
         setId(receiver, 20L);
 
-        when(trade.getProposingTeam()).thenReturn(proposingTeam);
-        when(trade.getReceivingTeam()).thenReturn(receivingTeam);
-        when(trade.getRequestedPlayer()).thenReturn(requestedPlayer);
-        when(trade.getOfferedPlayer()).thenReturn(offeredPlayer);
-        when(trade.getStatus()).thenReturn(TradeStatus.PENDING);
-        when(requestedPlayer.getTransferDate()).thenReturn(null);
-        when(offeredPlayer.getTransferDate()).thenReturn(null);
-        when(requestedPlayer.getTeam()).thenReturn(receivingTeam);
-        when(offeredPlayer.getTeam()).thenReturn(proposingTeam);
-        when(tradeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(trade));
-        when(teamRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(proposingTeam));
-        when(teamRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(receivingTeam));
     }
 
     @Test
     void rejectsAcceptanceWhenReceivingTeamCannotPayNegativeAmount() {
         proposingTeam.setBudget(100);
         receivingTeam.setBudget(20);
+        stubValidPendingTrade();
         when(trade.getAmount()).thenReturn(-21);
 
         assertThatThrownBy(() -> service.acceptTradeById(1L, 20L))
@@ -95,6 +84,7 @@ class TradeServiceTest {
     void acceptsTradeAndSettlesPositiveAmount() {
         proposingTeam.setBudget(100);
         receivingTeam.setBudget(20);
+        stubValidPendingTrade();
         when(trade.getAmount()).thenReturn(30);
 
         service.acceptTradeById(1L, 20L);
@@ -109,7 +99,8 @@ class TradeServiceTest {
 
     @Test
     void refusesAcceptanceByUserWhoDoesNotOwnReceivingTeam() {
-        when(trade.getAmount()).thenReturn(0);
+        when(tradeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(trade));
+        when(trade.getReceivingTeam()).thenReturn(receivingTeam);
 
         assertThatThrownBy(() -> service.acceptTradeById(1L, 999L))
                 .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
@@ -138,5 +129,20 @@ class TradeServiceTest {
         } catch (ReflectiveOperationException exception) {
             throw new AssertionError("Could not configure test entity", exception);
         }
+    }
+
+    private void stubValidPendingTrade() {
+        when(trade.getProposingTeam()).thenReturn(proposingTeam);
+        when(trade.getReceivingTeam()).thenReturn(receivingTeam);
+        when(trade.getRequestedPlayer()).thenReturn(requestedPlayer);
+        when(trade.getOfferedPlayer()).thenReturn(offeredPlayer);
+        when(trade.getStatus()).thenReturn(TradeStatus.PENDING);
+        when(requestedPlayer.getTransferDate()).thenReturn(null);
+        when(offeredPlayer.getTransferDate()).thenReturn(null);
+        when(requestedPlayer.getTeam()).thenReturn(receivingTeam);
+        when(offeredPlayer.getTeam()).thenReturn(proposingTeam);
+        when(tradeRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(trade));
+        when(teamRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(proposingTeam));
+        when(teamRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(receivingTeam));
     }
 }
