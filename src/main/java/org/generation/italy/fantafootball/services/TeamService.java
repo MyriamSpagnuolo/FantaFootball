@@ -1,6 +1,7 @@
 package org.generation.italy.fantafootball.services;
 
 import org.generation.italy.fantafootball.model.dto.CreateTeamRequest;
+import org.generation.italy.fantafootball.model.dto.RenameTeamRequest;
 import org.generation.italy.fantafootball.model.dto.TeamPlayerResponse;
 import org.generation.italy.fantafootball.model.dto.TeamResponse;
 import org.generation.italy.fantafootball.model.entities.AppUser;
@@ -14,6 +15,7 @@ import org.generation.italy.fantafootball.model.repositories.LeagueRepository;
 import org.generation.italy.fantafootball.model.repositories.TeamPlayerRepository;
 import org.generation.italy.fantafootball.model.repositories.TeamRepository;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,6 +66,27 @@ public class TeamService {
         League league = existingLeague.get();
 
         Team team = new Team(request.name(), user, league);
+        Team saved = teamRepository.save(team);
+
+        return TeamResponse.fromEntity(saved);
+    }
+
+    public TeamResponse renameTeam(Long teamId, Long requestingUserId, RenameTeamRequest request) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new NotFoundException("TEAM_NOT_FOUND", "Squadra non trovata: " + teamId));
+
+        if (!team.getUser().getId().equals(requestingUserId)) {
+            throw new AccessDeniedException("Solo il proprietario può rinominare la squadra");
+        }
+
+        String newName = request.name().trim();
+        boolean nameUnchanged = newName.equals(team.getName());
+        if (!nameUnchanged && teamRepository.existsByNameAndLeagueId(newName, team.getLeague().getId())) {
+            throw new ConflictException("DUPLICATE_TEAM_NAME",
+                    "Esiste già una squadra con questo nome in questa lega");
+        }
+
+        team.setName(newName);
         Team saved = teamRepository.save(team);
 
         return TeamResponse.fromEntity(saved);
