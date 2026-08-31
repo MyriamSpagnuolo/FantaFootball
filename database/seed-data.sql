@@ -14,6 +14,7 @@ BEGIN;
 
 TRUNCATE TABLE
     app_user_roles,
+    password_reset_token,
     app_users,
     league,
     league_invite,
@@ -44,13 +45,13 @@ ALTER SEQUENCE seq_trade_id RESTART WITH 1;
 -- ---------------------------------------------------------------------
 -- app_users / app_user_roles
 -- ---------------------------------------------------------------------
-INSERT INTO app_users (username, password_hash, enabled) VALUES
-('mario.rossi',    '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
-('luigi.bianchi',  '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
-('giovanni.verdi', '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
-('anna.russo',     '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
-('paolo.ferrari',  '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
-('sara.gallo',      '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true);
+INSERT INTO app_users (username, email, password_hash, enabled) VALUES
+('mario.rossi', 'mario.rossi@example.com', '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
+('luigi.bianchi', 'luigi.bianchi@example.com', '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
+('giovanni.verdi', 'giovanni.verdi@example.com', '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
+('anna.russo', 'anna.russo@example.com', '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
+('paolo.ferrari', 'paolo.ferrari@example.com', '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true),
+('sara.gallo', 'sara.gallo@example.com', '$2a$10$7hEWiFbv4hwZvvsxrO10c.634gabgrNJTb4cjdrb4vvz4XZulHQji', true);
 
 INSERT INTO app_user_roles (user_id, role)
 SELECT user_id, 'USER' FROM app_users;

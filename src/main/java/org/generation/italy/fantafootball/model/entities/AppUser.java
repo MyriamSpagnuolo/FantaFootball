@@ -22,11 +22,17 @@ public class AppUser {
     @Column(nullable = false, unique = true, length = 80)
     private String username;
 
+    @Column(nullable = false, unique = true, length = 254)
+    private String email;
+
     @Column(name = "password_hash", nullable = false, length = 120)
     private String passwordHash;
 
     @Column(nullable = false)
     private boolean enabled = true;
+
+    @Column(name = "token_version", nullable = false)
+    private int tokenVersion = 0;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "app_user_roles", joinColumns = @JoinColumn(name = "user_id"))
@@ -59,6 +65,14 @@ public class AppUser {
         this.username = username;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public String getPasswordHash() {
         return passwordHash;
     }
@@ -73,6 +87,14 @@ public class AppUser {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public int getTokenVersion() {
+        return tokenVersion;
+    }
+
+    public void incrementTokenVersion() {
+        tokenVersion++;
     }
 
     public Set<UserRole> getRoles() {
