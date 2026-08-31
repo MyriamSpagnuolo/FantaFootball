@@ -769,4 +769,3 @@ ALTER TABLE ONLY public.trade
 --
 -- PostgreSQL database dump complete
 --
-

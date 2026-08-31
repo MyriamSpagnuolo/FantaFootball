@@ -1,13 +1,11 @@
 package org.generation.italy.fantafootball.model.entities;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "league_invite")
 public class LeagueInvite {
-
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "league_invite_id_seq_gen")
     @SequenceGenerator(
