@@ -85,21 +85,21 @@ INSERT INTO team (name, user_id, league_id, budget, total_points) VALUES
 -- invito ancora PENDING, non fa parte di nessun team.
 -- ---------------------------------------------------------------------
 INSERT INTO league_invite (league_id, invited_by_user_id, invited_user_id, status, sent_date, response_date) VALUES
-((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
- (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'luigi.bianchi'),
- 'ACCEPTED', TIMESTAMP '2026-08-01 10:10:00', TIMESTAMP '2026-08-01 11:00:00'),
-((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
- (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'giovanni.verdi'),
- 'ACCEPTED', TIMESTAMP '2026-08-01 10:10:00', TIMESTAMP '2026-08-01 12:30:00'),
-((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
- (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'anna.russo'),
- 'ACCEPTED', TIMESTAMP '2026-08-01 10:10:00', TIMESTAMP '2026-08-01 09:15:00'),
-((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
- (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'paolo.ferrari'),
- 'ACCEPTED', TIMESTAMP '2026-08-01 10:10:00', TIMESTAMP '2026-08-01 14:20:00'),
-((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
- (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'sara.gallo'),
- 'PENDING', TIMESTAMP '2026-08-27 09:00:00', NULL);
+                                                                                                                 ((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
+                                                                                                                  (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'luigi.bianchi'),
+                                                                                                                  'ACCEPTED', TIMESTAMP '2026-08-01 10:10:00', TIMESTAMP '2026-08-01 11:00:00'),
+                                                                                                                 ((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
+                                                                                                                  (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'giovanni.verdi'),
+                                                                                                                  'ACCEPTED', TIMESTAMP '2026-08-01 10:10:00', TIMESTAMP '2026-08-01 12:30:00'),
+                                                                                                                 ((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
+                                                                                                                  (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'anna.russo'),
+                                                                                                                  'ACCEPTED', TIMESTAMP '2026-08-01 10:10:00', TIMESTAMP '2026-08-01 09:15:00'),
+                                                                                                                 ((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
+                                                                                                                  (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'paolo.ferrari'),
+                                                                                                                  'ACCEPTED', TIMESTAMP '2026-08-01 10:10:00', TIMESTAMP '2026-08-01 14:20:00'),
+                                                                                                                 ((SELECT id FROM league WHERE invite_code = 'LEGA2026'),
+                                                                                                                  (SELECT user_id FROM app_users WHERE username = 'mario.rossi'), (SELECT user_id FROM app_users WHERE username = 'sara.gallo'),
+                                                                                                                  'PENDING', TIMESTAMP '2026-08-27 09:00:00', NULL);
 
 -- ---------------------------------------------------------------------
 -- player (anagrafica dei giocatori reali, come se arrivasse dal
