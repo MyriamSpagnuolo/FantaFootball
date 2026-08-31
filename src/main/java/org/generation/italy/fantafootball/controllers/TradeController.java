@@ -37,7 +37,13 @@ public class TradeController {
     @DeleteMapping("remove/{id}")
     public void removeTradeRequestById(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
         Number userId = jwt.getClaim("uid");
-        tradeService.deleteTradeById(id, userId.longValue());
+        tradeService.rejectTradeById(id, userId.longValue());
+    }
+
+    @PatchMapping("accept/{id}")
+    public void acceptTradeRequestById(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        Number userId = jwt.getClaim("uid");
+        tradeService.acceptTradeById(id, userId.longValue());
     }
 
 
