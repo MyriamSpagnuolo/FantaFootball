@@ -76,7 +76,7 @@ class TeamMatchStatsTest {
     private static PlayerMatchStats player(String position, double vote) {
         LineupPlayer lineupPlayer = mock(LineupPlayer.class);
         when(lineupPlayer.isStarter()).thenReturn(true);
-        when(lineupPlayer.getPosition()).thenReturn(position);
+        when(lineupPlayer.getPosition()).thenReturn(org.generation.italy.fantafootball.model.entities.PlayerRole.valueOf(position));
 
         PlayerMatchStats stats = mock(PlayerMatchStats.class);
         when(stats.getLineupPlayer()).thenReturn(lineupPlayer);

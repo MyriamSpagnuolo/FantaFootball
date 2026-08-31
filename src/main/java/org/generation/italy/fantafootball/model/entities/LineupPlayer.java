@@ -22,9 +22,6 @@ public class LineupPlayer {
     @Column(name = "starter", nullable = false)
     private boolean starter = true;
 
-    @Column(name = "position", length = 20)
-    private String position;
-
     public LineupPlayer() {
     }
 
@@ -69,11 +66,7 @@ public class LineupPlayer {
         this.starter = starter;
     }
 
-    public String getPosition() {
-        return position;
-    }
-
-    public void setPosition(String position) {
-        this.position = position;
+    public PlayerRole getPosition() {
+        return teamPlayer != null ? teamPlayer.getPlayer().getPosition() : null;
     }
 }
