@@ -176,8 +176,7 @@ CREATE TABLE public.lineup (
 CREATE TABLE public.lineup_player (
                                       lineup_id bigint NOT NULL,
                                       player_id bigint NOT NULL,
-                                      starter boolean DEFAULT true NOT NULL,
-                                      "position" character varying(20)
+                                      starter boolean DEFAULT true NOT NULL
 );
 
 
@@ -241,7 +240,9 @@ CREATE TABLE public.player (
                                real_team_name character varying NOT NULL,
                                real_team_shirt_num integer NOT NULL,
                                price integer NOT NULL,
-                               is_injured boolean NOT NULL
+                               is_injured boolean NOT NULL,
+                               "position" character varying(20) NOT NULL,
+                               CONSTRAINT ck_player_position CHECK ((("position")::text = ANY ((ARRAY['P'::character varying, 'D'::character varying, 'C'::character varying, 'A'::character varying])::text[])))
 );
 
 
