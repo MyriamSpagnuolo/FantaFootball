@@ -28,9 +28,11 @@ public class TeamController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createTeam(@Valid @RequestBody CreateTeamRequest request) {
+    public ResponseEntity<?> createTeam(@Valid @RequestBody CreateTeamRequest request,
+                                        @AuthenticationPrincipal Jwt jwt) {
         try {
-            TeamResponse response = teamService.createTeam(request);
+            Long userId = extractUserId(jwt);
+            TeamResponse response = teamService.createTeam(request, userId);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (NotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -63,6 +65,11 @@ public class TeamController {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("errorCode", e.getErrorCode(), "message", e.getMessage()));
         }
+    }
+
+    private Long extractUserId(Jwt jwt) {
+        Number uid = jwt.getClaim("uid");
+        return uid.longValue();
     }
 
     @GetMapping("/{teamId}/players")
