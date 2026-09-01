@@ -2,6 +2,7 @@ package org.generation.italy.fantafootball.model.repositories;
 
 import org.generation.italy.fantafootball.model.entities.Trade;
 import org.generation.italy.fantafootball.model.entities.TradeStatus;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.JpaRepository;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Lock;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Collection;
 
 public interface TradeRepository extends JpaRepository<Trade, Long> {
     List<Trade> findByProposingTeam_IdAndStatus(Long teamId, TradeStatus status);
@@ -17,6 +19,17 @@ public interface TradeRepository extends JpaRepository<Trade, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select t from Trade t where t.id = :tradeId")
     java.util.Optional<Trade> findByIdForUpdate(@Param("tradeId") Long tradeId);
+
+    @Modifying(flushAutomatically = true)
+    @Query("""
+      UPDATE Trade t
+      SET t.status = org.generation.italy.fantafootball.model.entities.TradeStatus.CANCELLED
+      WHERE t.status = org.generation.italy.fantafootball.model.entities.TradeStatus.PENDING
+        AND t.id <> :acceptedTradeId
+        AND (t.requestedPlayer.id IN :playerIds OR t.offeredPlayer.id IN :playerIds)
+      """)
+    int cancelPendingTradesInvolvingPlayers(@Param("playerIds") Collection<Long> playerIds,
+                                            @Param("acceptedTradeId") Long acceptedTradeId);
 
     @Query("""
       SELECT t

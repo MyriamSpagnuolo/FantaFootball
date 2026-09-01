@@ -100,6 +100,7 @@ public class TradeService {
 
         trade.setStatus(TradeStatus.ACCEPTED);
         tradeRepository.save(trade);
+        cancelConflictingPendingTrades(trade, tradeId);
     }
 
     private Team findTeamOwnedByUserInLeague(Long userId, Team receivingTeam) {
@@ -236,6 +237,12 @@ public class TradeService {
                 requestedPlayer.getPlayer(), transferDate, requestedPlayer.getPurchasePrice()));
         teamPlayerRepository.save(new TeamPlayer(trade.getReceivingTeam(), trade.getReceivingTeam().getLeague(),
                 offeredPlayer.getPlayer(), transferDate, offeredPlayer.getPurchasePrice()));
+    }
+
+    private void cancelConflictingPendingTrades(Trade acceptedTrade, Long acceptedTradeId) {
+        tradeRepository.cancelPendingTradesInvolvingPlayers(
+                List.of(acceptedTrade.getRequestedPlayer().getId(), acceptedTrade.getOfferedPlayer().getId()),
+                acceptedTradeId);
     }
 
     private List<TradeDto> toDtos(List<Trade> trades) {
