@@ -2,12 +2,13 @@ package org.generation.italy.fantafootball.controllers;
 
 import jakarta.validation.Valid;
 import org.generation.italy.fantafootball.model.dto.InviteResponse;
-import org.generation.italy.fantafootball.model.dto.RespondToInviteRequest;
 import org.generation.italy.fantafootball.model.exceptions.ConflictException;
 import org.generation.italy.fantafootball.model.exceptions.NotFoundException;
 import org.generation.italy.fantafootball.services.LeagueInviteService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,10 +25,9 @@ public class InviteResponseController {
     }
 
     @PatchMapping("/{inviteId}/accept")
-    public ResponseEntity<?> acceptInvite(@PathVariable Long inviteId,
-                                          @Valid @RequestBody RespondToInviteRequest request) {
+    public ResponseEntity<?> acceptInvite(@PathVariable Long inviteId, @AuthenticationPrincipal Jwt jwt) {
         try {
-            InviteResponse response = leagueInviteService.acceptInvite(inviteId, request);
+            InviteResponse response = leagueInviteService.acceptInvite(inviteId, extractUserId(jwt));
             return ResponseEntity.ok(response);
         } catch (NotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -39,10 +39,9 @@ public class InviteResponseController {
     }
 
     @PatchMapping("/{inviteId}/decline")
-    public ResponseEntity<?> declineInvite(@PathVariable Long inviteId,
-                                           @Valid @RequestBody RespondToInviteRequest request) {
+    public ResponseEntity<?> declineInvite(@PathVariable Long inviteId, @AuthenticationPrincipal Jwt jwt) {
         try {
-            InviteResponse response = leagueInviteService.declineInvite(inviteId, request);
+            InviteResponse response = leagueInviteService.declineInvite(inviteId, extractUserId(jwt));
             return ResponseEntity.ok(response);
         } catch (NotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -53,9 +52,14 @@ public class InviteResponseController {
         }
     }
 
-    @GetMapping("/pending/user/{userId}")
-    public ResponseEntity<List<InviteResponse>> getPendingInvites(@PathVariable Long userId) {
-        List<InviteResponse> invites = leagueInviteService.getPendingInvitesForUser(userId);
+    @GetMapping("/pending")
+    public ResponseEntity<List<InviteResponse>> getPendingInvites(@AuthenticationPrincipal Jwt jwt) {
+        List<InviteResponse> invites = leagueInviteService.getPendingInvitesForUser(extractUserId(jwt));
         return ResponseEntity.ok(invites);
+    }
+
+    private Long extractUserId(Jwt jwt) {
+        Number uid = jwt.getClaim("uid");
+        return uid.longValue();
     }
 }

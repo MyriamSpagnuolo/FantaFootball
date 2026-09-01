@@ -68,6 +68,7 @@ public class TeamService {
         League league = existingLeague.get();
 
         Team team = new Team(request.name(), user, league);
+        team.setBudget(league.getBudget());
         Team saved = teamRepository.save(team);
 
         return TeamResponse.fromEntity(saved);

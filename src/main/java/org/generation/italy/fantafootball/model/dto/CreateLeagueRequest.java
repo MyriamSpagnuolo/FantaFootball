@@ -10,6 +10,10 @@ public record CreateLeagueRequest(
         @Size(max = 100, message = "Il nome non può superare 100 caratteri")
         String name,
 
+        @NotBlank(message = "Il nome della tua squadra è obbligatorio")
+        @Size(max = 100, message = "Il nome della squadra non può superare 100 caratteri")
+        String teamName,
+
         @NotNull(message = "Il budget iniziale è obbligatorio")
         @Min(value = 0, message = "Il budget non può essere negativo")
         Integer budget
