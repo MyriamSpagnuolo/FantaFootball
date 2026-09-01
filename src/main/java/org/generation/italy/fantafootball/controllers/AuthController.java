@@ -10,7 +10,6 @@ import org.generation.italy.fantafootball.model.dto.UserDto;
 import org.generation.italy.fantafootball.services.AuthService;
 import org.generation.italy.fantafootball.services.PasswordResetService;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -35,11 +34,6 @@ public class AuthController {
         // JWT authentication is stateless; clients log out by discarding the token.
     }
 
-    @PostMapping("/users")
-    @ResponseStatus(HttpStatus.CREATED)
-    public UserDto createUser(@Valid @RequestBody CreateUserRequest request) {
-        return authService.createUser(request);
-    }
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public UserDto registerUser(@Valid @RequestBody CreateUserRequest request) {
