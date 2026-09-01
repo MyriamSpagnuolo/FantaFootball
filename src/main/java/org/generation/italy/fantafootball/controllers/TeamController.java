@@ -74,20 +74,24 @@ public class TeamController {
     }
 
     @GetMapping("/{teamId}/players")
-    public ResponseEntity<?> getTeamRoster(@PathVariable Long teamId) {
+    public ResponseEntity<?> getTeamRoster(@PathVariable Long teamId, @AuthenticationPrincipal Jwt jwt) {
         try {
-            List<TeamPlayerResponse> roster = teamService.getTeamRoster(teamId);
+            List<TeamPlayerResponse> roster = teamService.getTeamRoster(teamId, extractUserId(jwt));
             return ResponseEntity.ok(roster);
         } catch (NotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("errorCode", e.getErrorCode(), "message", e.getMessage()));
+        } catch (ConflictException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("errorCode", e.getErrorCode(), "message", e.getMessage()));
         }
     }
 
     @DeleteMapping("/{teamId}/players/{playerId}")
-    public ResponseEntity<?> removePlayerFromTeam(@PathVariable Long teamId, @PathVariable Long playerId) {
+    public ResponseEntity<?> removePlayerFromTeam(@PathVariable Long teamId, @PathVariable Long playerId,
+                                                  @AuthenticationPrincipal Jwt jwt) {
         try {
-            teamService.removePlayerFromTeam(teamId, playerId);
+            teamService.removePlayerFromTeam(teamId, playerId, extractUserId(jwt));
             return ResponseEntity.noContent().build();
         } catch (NotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

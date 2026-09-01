@@ -141,9 +141,15 @@ public class TeamService {
     }
 
     @Transactional(readOnly = true)
-    public List<TeamPlayerResponse> getTeamRoster(Long teamId) {
-        if (!teamRepository.existsById(teamId)) {
-            throw new NotFoundException("TEAM_NOT_FOUND", "Squadra non trovata: " + teamId);
+    public List<TeamPlayerResponse> getTeamRoster(Long teamId, Long userId) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new NotFoundException("TEAM_NOT_FOUND", "Squadra non trovata: " + teamId));
+
+        boolean isOwner = team.getUser().getId().equals(userId);
+        boolean isLeagueAdmin = team.getLeague().getAdmin().getId().equals(userId);
+        if (!isOwner && !isLeagueAdmin) {
+            throw new ConflictException("NOT_AUTHORIZED_FOR_TEAM",
+                    "Solo il proprietario della squadra o l'admin della lega possono vedere questa rosa");
         }
 
         return teamPlayerRepository.findAllByTeamId(teamId).stream()
@@ -151,16 +157,22 @@ public class TeamService {
                 .toList();
     }
 
-    public void removePlayerFromTeam(Long teamId, Long playerId) {
-        Optional<TeamPlayer> existingPlayer = teamPlayerRepository.findById(playerId);
-        if (existingPlayer.isEmpty()) {
-            throw new NotFoundException("PLAYER_NOT_FOUND", "Giocatore non trovato: " + playerId);
+    public void removePlayerFromTeam(Long teamId, Long playerId, Long userId) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new NotFoundException("TEAM_NOT_FOUND", "Squadra non trovata: " + teamId));
+
+        boolean isOwner = team.getUser().getId().equals(userId);
+        boolean isLeagueAdmin = team.getLeague().getAdmin().getId().equals(userId);
+        if (!isOwner && !isLeagueAdmin) {
+            throw new ConflictException("NOT_AUTHORIZED_FOR_TEAM",
+                    "Solo il proprietario della squadra o l'admin della lega possono svincolare questo giocatore");
         }
-        TeamPlayer player = existingPlayer.get();
+
+        TeamPlayer player = teamPlayerRepository.findById(playerId)
+                .orElseThrow(() -> new NotFoundException("PLAYER_NOT_FOUND", "Giocatore non trovato: " + playerId));
 
         if (!player.getTeam().getId().equals(teamId)) {
-            throw new ConflictException("PLAYER_NOT_IN_TEAM",
-                    "Il giocatore non appartiene a questa squadra");
+            throw new ConflictException("PLAYER_NOT_IN_TEAM", "Il giocatore non appartiene a questa squadra");
         }
 
         try {
