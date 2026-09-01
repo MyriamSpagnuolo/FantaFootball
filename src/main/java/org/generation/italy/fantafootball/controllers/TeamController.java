@@ -28,6 +28,7 @@ public class TeamController {
     }
 
     @PostMapping
+    //controllare che l'user abbia un invito accettato
     public ResponseEntity<?> createTeam(@Valid @RequestBody CreateTeamRequest request,
                                         @AuthenticationPrincipal Jwt jwt) {
         try {
@@ -50,7 +51,7 @@ public class TeamController {
         return ResponseEntity.ok(teams);
     }
 
-    @PatchMapping("/{teamId}/name")
+    @PatchMapping("/{teamId}/teamName")
     public ResponseEntity<?> renameTeam(@PathVariable Long teamId,
                                          @Valid @RequestBody RenameTeamRequest request,
                                          @AuthenticationPrincipal Jwt jwt) {
