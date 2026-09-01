@@ -9,6 +9,8 @@ import org.generation.italy.fantafootball.model.exceptions.NotFoundException;
 import org.generation.italy.fantafootball.services.LeagueInviteService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -25,9 +27,11 @@ public class LeagueInviteController {
 
     @PostMapping
     public ResponseEntity<?> sendInvite(@PathVariable Long leagueId,
-                                        @Valid @RequestBody CreateInviteRequest request) {
+                                        @Valid @RequestBody CreateInviteRequest request,
+                                        @AuthenticationPrincipal Jwt jwt) {
         try {
-            InviteResponse response = leagueInviteService.sendInvite(leagueId, request);
+            Long invitedByUserId = extractUserId(jwt);
+            InviteResponse response = leagueInviteService.sendInvite(leagueId, request, invitedByUserId);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (NotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -39,5 +43,9 @@ public class LeagueInviteController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("errorCode", e.getErrorCode(), "message", e.getMessage()));
         }
+    }
+    private Long extractUserId(Jwt jwt) {
+        Number uid = jwt.getClaim("uid");
+        return uid.longValue();
     }
 }
