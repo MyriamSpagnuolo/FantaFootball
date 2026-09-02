@@ -84,11 +84,14 @@ public class LeagueSimSyncService {
         playerRepository.save(player);
     }
 
-    // Importa i risultati di tutte le giornate che LeagueSim segna come chiuse (closed = true) e
-    // che non abbiamo ancora importato in locale. Usiamo il flag "closed" del NOSTRO Matchday
-    // come marcatore "gia' importata": se e' gia' true, la saltiamo (idempotenza — rilanciare
-    // questo metodo piu' volte non duplica ne' rifa' lavoro inutile).
-    public void syncResults() {
+    // Allinea il calendario locale con TUTTE le giornate note a LeagueSim, aperte o chiuse: anche
+    // quelle non ancora giocate vengono salvate (solo number/date), perche' LeagueMatchService le
+    // usa per generare il calendario (i league_match fittizi) di una lega prima ancora che quella
+    // giornata sia stata disputata. Per le giornate che LeagueSim segna come chiuse (closed = true)
+    // e non ancora importate in locale, importa anche i risultati. Usiamo il flag "closed" del
+    // NOSTRO Matchday come marcatore "risultati gia' importati": se e' gia' true, lo saltiamo
+    // (idempotenza — rilanciare questo metodo piu' volte non duplica ne' rifa' lavoro inutile).
+    public void syncMatchdays() {
         List<LeagueSimMatchdayDto> remoteMatchdays;
         try {
             remoteMatchdays = client.fetchMatchdays();
@@ -98,6 +101,8 @@ public class LeagueSimSyncService {
         }
 
         for (LeagueSimMatchdayDto matchdayDto : remoteMatchdays) {
+            upsertMatchdayShell(matchdayDto);
+
             if (!matchdayDto.closed()) {
                 continue; // giornata non ancora giocata: non ci sono risultati da prendere
             }
@@ -115,6 +120,16 @@ public class LeagueSimSyncService {
                         matchdayDto.number(), e.getMessage(), e);
             }
         }
+    }
+
+    // Crea o aggiorna solo l'anagrafica della giornata (number/date). Non tocca mai "closed" qui:
+    // quel flag resta di competenza esclusiva di LeagueSimMatchdayImportService.importResults, che
+    // lo marca true solo a import risultati completato (vedi il commento li').
+    private void upsertMatchdayShell(LeagueSimMatchdayDto matchdayDto) {
+        Matchday matchday = matchdayRepository.findByNumber(matchdayDto.number())
+                .orElseGet(() -> new Matchday(matchdayDto.number(), matchdayDto.date()));
+        matchday.setDate(matchdayDto.date());
+        matchdayRepository.save(matchday);
     }
 
     private boolean isAlreadyImported(int matchdayNumber) {

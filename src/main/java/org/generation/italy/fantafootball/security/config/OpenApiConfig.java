@@ -35,7 +35,7 @@ public class OpenApiConfig {
                         .contact(new Contact().name("FantaFootball"))
                         .license(new License().name("Private project")))
                 .servers(List.of(new Server()
-                        .url("http://localhost:8080")
+                        .url("http://localhost:8081")
                         .description("Local development server")))
                 .components(new Components()
                         .addSecuritySchemes(BEARER_AUTH, bearerJwtScheme())

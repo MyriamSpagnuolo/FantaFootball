@@ -107,21 +107,32 @@ class LeagueSimSyncServiceTest {
         verifyNoInteractions(playerRepository);
     }
 
-    // --- syncResults -----------------------------------------------------
+    // --- syncMatchdays -----------------------------------------------------
 
     @Test
-    void syncResultsSkipsMatchdaysNotYetClosedOnLeagueSim() {
+    void syncMatchdaysSavesShellForMatchdayNotYetClosedOnLeagueSim() {
         LeagueSimMatchdayDto openMatchday = new LeagueSimMatchdayDto(1, LocalDate.of(2026, 3, 1), false);
         when(client.fetchMatchdays()).thenReturn(List.of(openMatchday));
+        when(matchdayRepository.findByNumber(1)).thenReturn(Optional.empty());
 
-        syncService.syncResults();
+        syncService.syncMatchdays();
 
+        // La giornata aperta va comunque salvata in locale (number/date): serve a generateCalendar()
+        // per costruire i league_match anche prima che la giornata sia stata disputata.
+        ArgumentCaptor<Matchday> matchdayCaptor = ArgumentCaptor.forClass(Matchday.class);
+        verify(matchdayRepository).save(matchdayCaptor.capture());
+        Matchday saved = matchdayCaptor.getValue();
+        assertThat(saved.getNumber()).isEqualTo(1);
+        assertThat(saved.getDate()).isEqualTo(LocalDate.of(2026, 3, 1));
+        assertThat(saved.isClosed()).isFalse();
+
+        // Non essendo chiusa, non ci sono risultati da importare.
         verify(client, never()).fetchResults(anyInt());
         verifyNoInteractions(matchdayImportService);
     }
 
     @Test
-    void syncResultsSkipsMatchdaysAlreadyImportedLocally() {
+    void syncMatchdaysSkipsMatchdaysAlreadyImportedLocally() {
         LeagueSimMatchdayDto closedDto = new LeagueSimMatchdayDto(3, LocalDate.of(2026, 3, 1), true);
         when(client.fetchMatchdays()).thenReturn(List.of(closedDto));
 
@@ -129,14 +140,14 @@ class LeagueSimSyncServiceTest {
         alreadyImported.setClosed(true);
         when(matchdayRepository.findByNumber(3)).thenReturn(Optional.of(alreadyImported));
 
-        syncService.syncResults();
+        syncService.syncMatchdays();
 
         verify(client, never()).fetchResults(anyInt());
         verifyNoInteractions(matchdayImportService);
     }
 
     @Test
-    void syncResultsImportsNewlyClosedMatchday() {
+    void syncMatchdaysImportsNewlyClosedMatchday() {
         LeagueSimMatchdayDto closedDto = new LeagueSimMatchdayDto(4, LocalDate.of(2026, 3, 8), true);
         when(client.fetchMatchdays()).thenReturn(List.of(closedDto));
         when(matchdayRepository.findByNumber(4)).thenReturn(Optional.empty());
@@ -145,13 +156,13 @@ class LeagueSimSyncServiceTest {
                 new LeagueSimPlayerResultDto(1L, BigDecimal.ONE, 0, 0, 0, 0, 0, 0, false, 0, false));
         when(client.fetchResults(4)).thenReturn(results);
 
-        syncService.syncResults();
+        syncService.syncMatchdays();
 
         verify(matchdayImportService).importResults(closedDto, results);
     }
 
     @Test
-    void syncResultsKeepsProcessingOtherMatchdaysWhenOneFails() {
+    void syncMatchdaysKeepsProcessingOtherMatchdaysWhenOneFails() {
         LeagueSimMatchdayDto matchday1 = new LeagueSimMatchdayDto(1, LocalDate.of(2026, 3, 1), true);
         LeagueSimMatchdayDto matchday2 = new LeagueSimMatchdayDto(2, LocalDate.of(2026, 3, 8), true);
         when(client.fetchMatchdays()).thenReturn(List.of(matchday1, matchday2));
@@ -162,7 +173,7 @@ class LeagueSimSyncServiceTest {
         List<LeagueSimPlayerResultDto> resultsForMatchday2 = List.of();
         when(client.fetchResults(2)).thenReturn(resultsForMatchday2);
 
-        syncService.syncResults();
+        syncService.syncMatchdays();
 
         // Chiamato una sola volta in totale, e proprio per la giornata 2: la giornata 1 (fallita
         // nel recupero dei risultati) non deve arrivare fino a matchdayImportService.
@@ -171,10 +182,10 @@ class LeagueSimSyncServiceTest {
     }
 
     @Test
-    void syncResultsDoesNotThrowWhenLeagueSimIsUnreachable() {
+    void syncMatchdaysDoesNotThrowWhenLeagueSimIsUnreachable() {
         when(client.fetchMatchdays()).thenThrow(new RuntimeException("down"));
 
-        assertThatCode(() -> syncService.syncResults()).doesNotThrowAnyException();
+        assertThatCode(() -> syncService.syncMatchdays()).doesNotThrowAnyException();
 
         verifyNoInteractions(matchdayImportService);
     }

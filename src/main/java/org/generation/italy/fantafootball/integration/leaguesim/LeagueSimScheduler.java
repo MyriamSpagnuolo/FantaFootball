@@ -9,8 +9,9 @@ import org.springframework.stereotype.Component;
 // scheduling attivo, e rende visibile a colpo d'occhio quali sono i "trigger" automatici del sistema.
 //
 // Due scheduler distinti, con frequenze diverse, per un motivo concreto:
-// - i risultati (playerResult) vanno importati appena una giornata si chiude su LeagueSim, quindi
-//   un intervallo breve ha senso;
+// - le giornate (calendario + risultati quando disponibili) vanno controllate spesso: sia perche'
+//   una giornata puo' chiudersi da un momento all'altro su LeagueSim, sia perche' il calendario
+//   delle giornate future serve a generare i league_match il prima possibile;
 // - il catalogo giocatori (player) cambia raramente (prezzo, infortuni), quindi controllarlo cosi'
 //   spesso sarebbe inutile: un intervallo lungo basta e avanza.
 // fixedDelay (invece di fixedRate) fa partire il conteggio del prossimo giro SOLO dopo che quello
@@ -31,7 +32,7 @@ public class LeagueSimScheduler {
     }
 
     @Scheduled(fixedDelayString = "${leaguesim.results-sync-interval}")
-    public void syncResults() {
-        syncService.syncResults();
+    public void syncMatchdays() {
+        syncService.syncMatchdays();
     }
 }
