@@ -6,6 +6,7 @@ import org.generation.italy.fantafootball.model.entities.Team;
 import org.generation.italy.fantafootball.model.entities.TeamPlayer;
 import org.generation.italy.fantafootball.model.entities.Trade;
 import org.generation.italy.fantafootball.model.entities.TradeStatus;
+import org.generation.italy.fantafootball.model.exceptions.ConflictException;
 import org.generation.italy.fantafootball.model.repositories.TeamPlayerRepository;
 import org.generation.italy.fantafootball.model.repositories.TeamRepository;
 import org.generation.italy.fantafootball.model.repositories.TradeRepository;
@@ -14,8 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
 import java.util.Optional;
@@ -71,9 +71,9 @@ class TradeServiceTest {
         when(trade.getAmount()).thenReturn(-21);
 
         assertThatThrownBy(() -> service.acceptTradeById(1L, 20L))
-                .isInstanceOf(ResponseStatusException.class)
-                .extracting(exception -> ((ResponseStatusException) exception).getStatusCode())
-                .isEqualTo(HttpStatus.CONFLICT);
+                .isInstanceOf(ConflictException.class)
+                .extracting(exception -> ((ConflictException) exception).getErrorCode())
+                .isEqualTo("insufficient_budget");
 
         assertThat(proposingTeam.getBudget()).isEqualTo(100);
         assertThat(receivingTeam.getBudget()).isEqualTo(20);
@@ -107,7 +107,7 @@ class TradeServiceTest {
         when(trade.getReceivingTeam()).thenReturn(receivingTeam);
 
         assertThatThrownBy(() -> service.acceptTradeById(1L, 999L))
-                .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+                .isInstanceOf(AccessDeniedException.class);
 
         verifyNoInteractions(teamRepository, teamPlayerRepository);
         verify(tradeRepository, never()).save(any());
@@ -118,9 +118,7 @@ class TradeServiceTest {
         when(teamRepository.findByIdAndUserId(2L, 999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getAllPendingReceivedTradesByTeamId(2L, 999L))
-                .isInstanceOf(ResponseStatusException.class)
-                .extracting(exception -> ((ResponseStatusException) exception).getStatusCode())
-                .isEqualTo(HttpStatus.FORBIDDEN);
+                .isInstanceOf(AccessDeniedException.class);
 
         verifyNoInteractions(tradeRepository);
     }
