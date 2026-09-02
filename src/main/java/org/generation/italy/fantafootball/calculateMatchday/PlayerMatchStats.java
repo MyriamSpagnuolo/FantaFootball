@@ -42,8 +42,17 @@ public class PlayerMatchStats {
         return player.getPlayer() != null
                 && player.getPlayer().getRole() == PlayerRole.P;
     }
+
     public double calculateFantaRating() {
-        return getVote()
+        return calculateFantaRating(result);
+    }
+
+    // Usa solo campi di PlayerResult (il riferimento a Player incluso), quindi calcolabile per
+    // qualunque giocatore con un risultato per una giornata, senza bisogno di una lineup/formazione.
+    public static double calculateFantaRating(PlayerResult result) {
+        boolean isGoalkeeper = result.getPlayer() != null && result.getPlayer().getRole() == PlayerRole.P;
+        double vote = result.getRating() == null ? 0.0 : result.getRating().doubleValue();
+        return vote
                 + 3 * result.getGoalNum()
                 - result.getAutogoalNum()
                 + result.getAssistNum()
@@ -52,6 +61,6 @@ public class PlayerMatchStats {
                 - 0.5 * result.getYellowCard()
                 - (result.isRedCard() ? 1 : 0)
                 + (Boolean.TRUE.equals(result.getCleanSheet()) ? 1 : 0)
-                - (isGoalkeeper() ? result.getGoalConceded() : 0);
+                - (isGoalkeeper ? result.getGoalConceded() : 0);
     }
 }

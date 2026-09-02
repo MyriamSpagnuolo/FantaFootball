@@ -94,6 +94,18 @@ public class MatchdayCalculationService {
         return GoalsCalculator.calculateGoals(calculateLineupScore(lineupId));
     }
 
+    // Fantavoto del singolo giocatore per una giornata, indipendente da qualunque lineup: utile
+    // per chi non e' mai stato schierato da nessuna fantasquadra (o e' stato messo in panchina e
+    // mai sostituito), casi che calculateLineupScore non copre perche' itera solo lineup.getPlayers().
+    @Transactional(readOnly = true)
+    public double calculatePlayerRating(Long playerId, Long matchdayId) {
+        PlayerResult result = playerResultRepository.findByPlayerIdAndMatchdayId(playerId, matchdayId)
+                .orElseThrow(() -> new NotFoundException(
+                        "player_result_not_found",
+                        "No result found for player " + playerId + " in matchday " + matchdayId));
+        return PlayerMatchStats.calculateFantaRating(result);
+    }
+
     private Optional<PlayerMatchStats> toPlayedMatchStats(Lineup lineup, LineupPlayer lineupPlayer) {
         var player = lineupPlayer.getTeamPlayer();
         Optional<PlayerResult> result = playerResultRepository
