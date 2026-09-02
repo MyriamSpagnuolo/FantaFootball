@@ -2,6 +2,7 @@ package org.generation.italy.fantafootball.calculateMatchday;
 
 import org.generation.italy.fantafootball.model.entities.LineupPlayer;
 import org.generation.italy.fantafootball.model.entities.PlayerResult;
+import org.generation.italy.fantafootball.model.entities.PlayerRole;
 import org.generation.italy.fantafootball.model.entities.TeamPlayer;
 
 public class PlayerMatchStats {
@@ -37,6 +38,10 @@ public class PlayerMatchStats {
         return result.getRating() == null ? 0.0 : result.getRating().doubleValue();
     }
 
+    private boolean isGoalkeeper() {
+        return player.getPlayer() != null
+                && player.getPlayer().getRole() == PlayerRole.P;
+    }
     public double calculateFantaRating() {
         return getVote()
                 + 3 * result.getGoalNum()
@@ -46,6 +51,7 @@ public class PlayerMatchStats {
                 - 3 * result.getPenaltyFailed()
                 - 0.5 * result.getYellowCard()
                 - (result.isRedCard() ? 1 : 0)
-                + (Boolean.TRUE.equals(result.getCleanSheet()) ? 1 : 0);
+                + (Boolean.TRUE.equals(result.getCleanSheet()) ? 1 : 0)
+                - (isGoalkeeper() ? result.getGoalConceded() : 0);
     }
 }
