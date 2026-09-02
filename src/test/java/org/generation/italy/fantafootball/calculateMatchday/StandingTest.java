@@ -46,7 +46,7 @@ class StandingTest {
 
         assertEquals(3, home.getTotalPoints());
         assertEquals(0, away.getTotalPoints());
-        assertEquals(BigDecimal.valueOf(72), match.getHomeScore());
+        assertEquals(0, BigDecimal.valueOf(72).compareTo(match.getHomeScore()));
     }
 
     @Test

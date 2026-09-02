@@ -68,8 +68,6 @@ public class AuthService {
             throw new ConflictException("email_unavailable", "Email already registered");
         }
 
-
-
         AppUser user = new AppUser();
         user.setUsername(request.username());
         user.setEmail(request.email().trim().toLowerCase(Locale.ROOT));
@@ -84,24 +82,5 @@ public class AuthService {
                 saved.isEnabled(),
                 saved.getRoles().stream().map(Enum::name).collect(Collectors.toSet())
         );
-    }
-
-    private static Set<UserRole> parseRoles(Set<String> roles) {
-        if (roles == null) {
-            return Set.of();
-        }
-        return roles.stream()
-                .filter(r -> r != null && !r.isBlank())
-                .map(r -> r.trim().toUpperCase(Locale.ROOT))
-                .map(AuthService::parseRole)
-                .collect(Collectors.toSet());
-    }
-
-    private static UserRole parseRole(String role) {
-        try {
-            return UserRole.valueOf(role);
-        } catch (IllegalArgumentException ex) {
-            throw new BadRequestException("invalid_role", "Role must be ADMIN,USER");
-        }
     }
 }

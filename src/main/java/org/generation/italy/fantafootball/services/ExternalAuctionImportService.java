@@ -39,6 +39,7 @@ public class ExternalAuctionImportService {
     @Transactional
     public void importPlayer(Long leagueId, Long teamId, Long authenticatedUserId,
                              Long playerId, PurchasePlayerRequest request) {
+        validatePurchaseRequest(request);
         int purchasePrice = request.purchasePrice();
 
         League league = findLeague(leagueId);
@@ -47,7 +48,6 @@ public class ExternalAuctionImportService {
 
         validateTeamBelongsToLeague(team, league);
         validateAdmin(league, authenticatedUserId);
-        validatePurchaseRequest(request);
         validatePlayerAvailable(player, league);
         validateBudget(purchasePrice, team);
 
