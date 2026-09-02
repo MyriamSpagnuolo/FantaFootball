@@ -1,5 +1,7 @@
 package org.generation.italy.fantafootball.controllers;
 
+import org.generation.italy.fantafootball.model.dto.UpdateTradeStatusRequest;
+import org.generation.italy.fantafootball.model.entities.TradeStatus;
 import org.generation.italy.fantafootball.services.TradeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,7 +36,7 @@ class TradeControllerTest {
         when(jwt.getClaim("uid")).thenReturn(42L);
         when(tradeService.getAllPendingReceivedTradesByTeamId(7L, 42L)).thenReturn(List.of());
 
-        controller.getPendingReceivedTradeRequests(7L, jwt);
+        controller.getTeamTrades(7L, "received", "pending", null, jwt);
 
         verify(tradeService).getAllPendingReceivedTradesByTeamId(7L, 42L);
     }
@@ -53,7 +55,7 @@ class TradeControllerTest {
     void acceptsTradeUsingAuthenticatedUser() {
         when(jwt.getClaim("uid")).thenReturn(42L);
 
-        controller.acceptTradeRequestById(5L, jwt);
+        controller.updateTradeStatus(5L, new UpdateTradeStatusRequest(TradeStatus.ACCEPTED), jwt);
 
         verify(tradeService).acceptTradeById(5L, 42L);
     }

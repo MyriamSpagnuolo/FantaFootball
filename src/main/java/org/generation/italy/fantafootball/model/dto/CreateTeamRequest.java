@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 public record CreateTeamRequest(
         @NotBlank(message = "Il nome della squadra è obbligatorio")
         @Size(max = 100, message = "Il nome non può superare 100 caratteri")
-        String name,
+        String teamName,
 
         @NotNull(message = "La lega è obbligatoria")
         Long leagueId

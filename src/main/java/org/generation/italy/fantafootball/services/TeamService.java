@@ -5,13 +5,11 @@ import org.generation.italy.fantafootball.model.dto.RenameTeamRequest;
 import org.generation.italy.fantafootball.model.dto.TeamPlayerResponse;
 import org.generation.italy.fantafootball.model.dto.TeamResponse;
 import org.generation.italy.fantafootball.model.dto.TeamStandingResponse;
-import org.generation.italy.fantafootball.model.entities.AppUser;
-import org.generation.italy.fantafootball.model.entities.League;
-import org.generation.italy.fantafootball.model.entities.Team;
-import org.generation.italy.fantafootball.model.entities.TeamPlayer;
+import org.generation.italy.fantafootball.model.entities.*;
 import org.generation.italy.fantafootball.model.exceptions.ConflictException;
 import org.generation.italy.fantafootball.model.exceptions.NotFoundException;
 import org.generation.italy.fantafootball.model.repositories.AppUserRepository;
+import org.generation.italy.fantafootball.model.repositories.LeagueInviteRepository;
 import org.generation.italy.fantafootball.model.repositories.LeagueRepository;
 import org.generation.italy.fantafootball.model.repositories.TeamPlayerRepository;
 import org.generation.italy.fantafootball.model.repositories.TeamRepository;
@@ -30,15 +28,18 @@ public class TeamService {
     private final TeamPlayerRepository teamPlayerRepository;
     private final AppUserRepository appUserRepository;
     private final LeagueRepository leagueRepository;
+    private final LeagueInviteRepository leagueInviteRepository;
 
     public TeamService(TeamRepository teamRepository,
                        TeamPlayerRepository teamPlayerRepository,
                        AppUserRepository appUserRepository,
-                       LeagueRepository leagueRepository) {
+                       LeagueRepository leagueRepository,
+                       LeagueInviteRepository leagueInviteRepository) {
         this.teamRepository = teamRepository;
         this.teamPlayerRepository = teamPlayerRepository;
         this.appUserRepository = appUserRepository;
         this.leagueRepository = leagueRepository;
+        this.leagueInviteRepository = leagueInviteRepository;
     }
 
     @Transactional
@@ -49,7 +50,7 @@ public class TeamService {
         }
         AppUser user = existingUser.get();
 
-        boolean duplicateName = teamRepository.existsByNameAndLeagueId(request.name(), request.leagueId());
+        boolean duplicateName = teamRepository.existsByNameAndLeagueId(request.teamName(), request.leagueId());
         if (duplicateName) {
             throw new ConflictException("DUPLICATE_TEAM_NAME",
                     "Esiste già una squadra con questo nome in questa lega");
@@ -67,7 +68,30 @@ public class TeamService {
         }
         League league = existingLeague.get();
 
-        Team team = new Team(request.name(), user, league);
+        boolean isAdmin = userId.equals(league.getAdmin().getId());
+        if(!isAdmin) {
+            LeagueInvite invite = leagueInviteRepository
+                    .findTopByLeagueIdAndInvitedUserIdOrderBySentDateDesc(request.leagueId(), userId)
+                    .orElseThrow(() -> new AccessDeniedException(
+                            "Non sei autorizzato a creare una squadra in questa lega"
+                    ));
+
+            if (invite.getStatus() == LeagueInviteStatus.PENDING) {
+                throw new ConflictException(
+                        "INVITE_PENDING",
+                        "Devi accettare l'invito prima di creare una squadra"
+                );
+            }
+
+            if (invite.getStatus() != LeagueInviteStatus.ACCEPTED) {
+                throw new AccessDeniedException(
+                        "Non sei autorizzato a creare una squadra in questa lega"
+                );
+            }
+        }
+
+        Team team = new Team(request.teamName(), user, league);
+        team.setBudget(league.getBudget());
         Team saved = teamRepository.save(team);
 
         return TeamResponse.fromEntity(saved);
@@ -106,7 +130,6 @@ public class TeamService {
         if (!leagueRepository.existsById(leagueId)) {
             throw new NotFoundException("LEAGUE_NOT_FOUND", "Lega non trovata: " + leagueId);
         }
-
         boolean isMember = teamRepository.existsByUserIdAndLeagueId(requestingUserId, leagueId);
         if (!isMember) {
             throw new AccessDeniedException("Devi far parte della lega per vedere le squadre partecipanti");
@@ -118,25 +141,38 @@ public class TeamService {
     }
 
     @Transactional(readOnly = true)
-    public List<TeamPlayerResponse> getTeamRoster(Long teamId) {
-        if (!teamRepository.existsById(teamId)) {
-            throw new NotFoundException("TEAM_NOT_FOUND", "Squadra non trovata: " + teamId);
+    public List<TeamPlayerResponse> getTeamRoster(Long teamId, Long userId) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new NotFoundException("TEAM_NOT_FOUND", "Squadra non trovata: " + teamId));
+
+        boolean isOwner = team.getUser().getId().equals(userId);
+        boolean isLeagueAdmin = team.getLeague().getAdmin().getId().equals(userId);
+        if (!isOwner && !isLeagueAdmin) {
+            throw new ConflictException("NOT_AUTHORIZED_FOR_TEAM",
+                    "Solo il proprietario della squadra o l'admin della lega possono vedere questa rosa");
         }
+
         return teamPlayerRepository.findAllByTeamId(teamId).stream()
                 .map(TeamPlayerResponse::fromEntity)
                 .toList();
     }
 
-    public void removePlayerFromTeam(Long teamId, Long playerId) {
-        Optional<TeamPlayer> existingPlayer = teamPlayerRepository.findById(playerId);
-        if (existingPlayer.isEmpty()) {
-            throw new NotFoundException("PLAYER_NOT_FOUND", "Giocatore non trovato: " + playerId);
+    public void removePlayerFromTeam(Long teamId, Long playerId, Long userId) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new NotFoundException("TEAM_NOT_FOUND", "Squadra non trovata: " + teamId));
+
+        boolean isOwner = team.getUser().getId().equals(userId);
+        boolean isLeagueAdmin = team.getLeague().getAdmin().getId().equals(userId);
+        if (!isOwner && !isLeagueAdmin) {
+            throw new ConflictException("NOT_AUTHORIZED_FOR_TEAM",
+                    "Solo il proprietario della squadra o l'admin della lega possono svincolare questo giocatore");
         }
-        TeamPlayer player = existingPlayer.get();
+
+        TeamPlayer player = teamPlayerRepository.findById(playerId)
+                .orElseThrow(() -> new NotFoundException("PLAYER_NOT_FOUND", "Giocatore non trovato: " + playerId));
 
         if (!player.getTeam().getId().equals(teamId)) {
-            throw new ConflictException("PLAYER_NOT_IN_TEAM",
-                    "Il giocatore non appartiene a questa squadra");
+            throw new ConflictException("PLAYER_NOT_IN_TEAM", "Il giocatore non appartiene a questa squadra");
         }
 
         try {

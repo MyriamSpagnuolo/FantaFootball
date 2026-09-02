@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -86,6 +87,8 @@ class TradeServiceTest {
         receivingTeam.setBudget(20);
         stubValidPendingTrade();
         when(trade.getAmount()).thenReturn(30);
+        when(requestedPlayer.getId()).thenReturn(100L);
+        when(offeredPlayer.getId()).thenReturn(200L);
 
         service.acceptTradeById(1L, 20L);
 
@@ -95,6 +98,7 @@ class TradeServiceTest {
         verify(teamPlayerRepository, times(2)).save(any(TeamPlayer.class));
         verify(trade).setStatus(TradeStatus.ACCEPTED);
         verify(tradeRepository).save(trade);
+        verify(tradeRepository).cancelPendingTradesInvolvingPlayers(List.of(100L, 200L), 1L);
     }
 
     @Test
