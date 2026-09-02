@@ -18,8 +18,9 @@ import java.util.Optional;
 // Orchestratore della sincronizzazione con LeagueSim: decide COSA sincronizzare e in che ordine,
 // ma non contiene la logica HTTP (quella e' in LeagueSimClient) ne' quella di scrittura atomica
 // dei risultati (quella e' in LeagueSimMatchdayImportService, per il motivo spiegato li').
-// Per ora questa classe va richiamata manualmente (es. da un test o da un endpoint temporaneo);
-// il prossimo passo sara' decidere COME/QUANDO farla partire in automatico (scheduler, endpoint admin, ecc.).
+// Il COME/QUANDO farla partire e' deciso da LeagueSimScheduler (@Scheduled): FantaFootball non
+// espone e non esporra' un trigger manuale/admin per avviare la simulazione, resta un consumatore
+// passivo che si limita a leggere periodicamente lo stato di LeagueSim.
 @Service
 public class LeagueSimSyncService {
 

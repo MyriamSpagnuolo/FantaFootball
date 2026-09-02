@@ -5,6 +5,8 @@ import org.generation.italy.fantafootball.model.entities.LineupPlayer;
 import org.generation.italy.fantafootball.model.entities.PlayerResult;
 import org.generation.italy.fantafootball.model.repositories.LineupRepository;
 import org.generation.italy.fantafootball.model.repositories.PlayerResultRepository;
+import org.generation.italy.fantafootball.model.exceptions.BadRequestException;
+import org.generation.italy.fantafootball.model.exceptions.ConflictException;
 import org.generation.italy.fantafootball.model.exceptions.NotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,19 +36,19 @@ public class MatchdayCalculationService {
     @Transactional(readOnly = true)
     public double calculateLineupScore(Long lineupId) {
         if (lineupId == null) {
-            throw new IllegalArgumentException("Lineup id is required");
+            throw new BadRequestException("lineup_id_required", "Lineup id is required");
         }
         Lineup lineup = lineupRepository.findById(lineupId)
                 .orElseThrow(() -> new NotFoundException(
                         "lineup_not_found", "Lineup not found: " + lineupId));
 
         if (!lineup.getLeagueMatch().getMatchday().isClosed()) {
-            throw new IllegalStateException("The matchday is not closed yet");
+            throw new ConflictException("matchday_not_closed", "The matchday is not closed yet");
         }
 
         if (!Objects.equals(lineup.getTeam().getId(), lineup.getLeagueMatch().getHomeTeam().getId())
                 && !Objects.equals(lineup.getTeam().getId(), lineup.getLeagueMatch().getAwayTeam().getId())) {
-            throw new IllegalArgumentException("Lineup team does not belong to the league match");
+            throw new ConflictException("lineup_team_mismatch", "Lineup team does not belong to the league match");
         }
 
         List<LineupPlayer> starters = lineup.getPlayers().stream()

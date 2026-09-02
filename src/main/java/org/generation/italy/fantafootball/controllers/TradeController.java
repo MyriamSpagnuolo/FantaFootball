@@ -5,12 +5,12 @@ import org.generation.italy.fantafootball.model.dto.CreateTradeRequest;
 import org.generation.italy.fantafootball.model.dto.TradeDto;
 import org.generation.italy.fantafootball.model.dto.UpdateTradeStatusRequest;
 import org.generation.italy.fantafootball.model.entities.TradeStatus;
+import org.generation.italy.fantafootball.model.exceptions.BadRequestException;
 import org.generation.italy.fantafootball.services.TradeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -51,7 +51,7 @@ public class TradeController {
         if ("pending".equals(status) && "sent".equals(direction)) {
             return tradeService.getAllPendingSentTradesByTeamId(teamId, userId);
         }
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid trade filters");
+        throw new BadRequestException("invalid_trade_filters", "Invalid trade filters");
     }
 
     @PatchMapping("/trades/{id}")
@@ -68,7 +68,7 @@ public class TradeController {
             tradeService.rejectTradeById(id, userId);
             return;
         }
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+        throw new BadRequestException("unsupported_trade_status",
                 "Only ACCEPTED or REJECTED status updates are supported for trades");
     }
 
