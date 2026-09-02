@@ -40,7 +40,7 @@ Java 26, Spring Boot 4.1.0, Spring Data JPA + PostgreSQL/Hikari, Spring Security
 
 ## Da non fare
 - Non usare il ruolo globale `ADMIN`/`USER` come unico guard per azioni a livello di lega: verificare sempre `League.admin`.
-- Non abbinare `Player` per nome/cognome quando si importano risultati esterni: `PlayerResultService.toEntity()` (usato da `POST /api/player-results`) lo fa già ed è fragile a omonimie/refusi — replicare invece il pattern per `externalId` di `LeagueSimMatchdayImportService`.
+- Non abbinare `Player` per nome/cognome quando si importano risultati esterni: è fragile a omonimie/refusi — usare invece il pattern per `externalId` di `LeagueSimMatchdayImportService`.
 - Non chiamare un metodo `@Transactional` della stessa classe aspettandosi che la transazione si applichi (self-invocation bypassa il proxy Spring): separare in un bean diverso come già fatto per l'import LeagueSim.
 - Non assumere che Hibernate crei/alteri le tabelle: `ddl-auto=validate` richiede modifica manuale di `database/ddl.sql`.
 - Non lanciare `ResponseStatusException` con stringa ad-hoc `"code: message"` per nuovo codice (pattern usato in `TradeService`): rompe la forma strutturata `{errorCode, message}` prodotta da `GlobalExceptionHandler` per le altre eccezioni.
@@ -48,6 +48,5 @@ Java 26, Spring Boot 4.1.0, Spring Data JPA + PostgreSQL/Hikari, Spring Security
 ## TODO / decisioni aperte
 - `EntityNotFoundException` (`model/exceptions`) è una checked exception morta/inutilizzata, incoerente con `NotFoundException` (RuntimeException) effettivamente in uso ovunque — candidata alla rimozione.
 - `TradeService` non passa per gli `errorCode` strutturati (usa `ResponseStatusException` grezzo) — incoerente col resto dei service.
-- `POST /api/player-results` (`PlayerResultController`) sembra superato dal path di import LeagueSim via `externalId`, ma resta raggiungibile da qualsiasi utente autenticato senza controllo di ownership.
 - Nessun trigger lato FantaFootball per **far partire** la simulazione delle giornate su LeagueSim: si dipende interamente dallo scheduler giornaliero di LeagueSim. FantaFootball si limita a leggerne lo stato via `syncMatchdays()` (polling ogni `leaguesim.results-sync-interval`, default 10 minuti), che sincronizza calendario + risultati.
 - Il "fantavoto" (voto + bonus/malus, formula in `PlayerMatchStats.calculateFantaRating()`) è oggi calcolabile **solo** dentro `MatchdayCalculationService.calculateLineupScore(lineupId)`, cioè aggregato per l'intera formazione di un `league_match`. Manca un endpoint di lettura per il fantavoto del singolo player indipendente da una lineup (utile al frontend) — la formula andrebbe estratta in un metodo condiviso, dato che usa solo campi di `PlayerResult` e non ha bisogno del contesto `LineupPlayer`.
