@@ -54,6 +54,12 @@ public class TradeController {
         throw new BadRequestException("invalid_trade_filters", "Invalid trade filters");
     }
 
+    @GetMapping("/leagues/{leagueId}/trades")
+    public List<TradeDto> getLeagueTrades(@PathVariable Long leagueId,
+                                          @AuthenticationPrincipal Jwt jwt) {
+        return tradeService.getAllByLeagueId(leagueId, getAuthenticatedUserId(jwt));
+    }
+
     @PatchMapping("/trades/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateTradeStatus(@PathVariable Long id,
