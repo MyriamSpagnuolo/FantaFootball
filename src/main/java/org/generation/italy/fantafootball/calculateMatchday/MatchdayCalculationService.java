@@ -5,6 +5,8 @@ import org.generation.italy.fantafootball.model.entities.LineupPlayer;
 import org.generation.italy.fantafootball.model.entities.PlayerResult;
 import org.generation.italy.fantafootball.model.repositories.LineupRepository;
 import org.generation.italy.fantafootball.model.repositories.PlayerResultRepository;
+import org.generation.italy.fantafootball.model.exceptions.BadRequestException;
+import org.generation.italy.fantafootball.model.exceptions.ConflictException;
 import org.generation.italy.fantafootball.model.exceptions.NotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,19 +36,19 @@ public class MatchdayCalculationService {
     @Transactional(readOnly = true)
     public double calculateLineupScore(Long lineupId) {
         if (lineupId == null) {
-            throw new IllegalArgumentException("Lineup id is required");
+            throw new BadRequestException("lineup_id_required", "Lineup id is required");
         }
         Lineup lineup = lineupRepository.findById(lineupId)
                 .orElseThrow(() -> new NotFoundException(
                         "lineup_not_found", "Lineup not found: " + lineupId));
 
         if (!lineup.getLeagueMatch().getMatchday().isClosed()) {
-            throw new IllegalStateException("The matchday is not closed yet");
+            throw new ConflictException("matchday_not_closed", "The matchday is not closed yet");
         }
 
         if (!Objects.equals(lineup.getTeam().getId(), lineup.getLeagueMatch().getHomeTeam().getId())
                 && !Objects.equals(lineup.getTeam().getId(), lineup.getLeagueMatch().getAwayTeam().getId())) {
-            throw new IllegalArgumentException("Lineup team does not belong to the league match");
+            throw new ConflictException("lineup_team_mismatch", "Lineup team does not belong to the league match");
         }
 
         List<LineupPlayer> starters = lineup.getPlayers().stream()
@@ -90,6 +92,18 @@ public class MatchdayCalculationService {
     @Transactional(readOnly = true)
     public int calculateLineupGoals(Long lineupId) {
         return GoalsCalculator.calculateGoals(calculateLineupScore(lineupId));
+    }
+
+    // Fantavoto del singolo giocatore per una giornata, indipendente da qualunque lineup: utile
+    // per chi non e' mai stato schierato da nessuna fantasquadra (o e' stato messo in panchina e
+    // mai sostituito), casi che calculateLineupScore non copre perche' itera solo lineup.getPlayers().
+    @Transactional(readOnly = true)
+    public double calculatePlayerRating(Long playerId, Long matchdayId) {
+        PlayerResult result = playerResultRepository.findByPlayerIdAndMatchdayId(playerId, matchdayId)
+                .orElseThrow(() -> new NotFoundException(
+                        "player_result_not_found",
+                        "No result found for player " + playerId + " in matchday " + matchdayId));
+        return PlayerMatchStats.calculateFantaRating(result);
     }
 
     private Optional<PlayerMatchStats> toPlayedMatchStats(Lineup lineup, LineupPlayer lineupPlayer) {

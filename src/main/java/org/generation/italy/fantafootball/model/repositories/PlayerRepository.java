@@ -23,4 +23,6 @@ public interface PlayerRepository extends JpaRepository<Player, Long>, JpaSpecif
 
     Optional<Player> findByNameAndSurnameAndRealTeamNameAndRealTeamShirtNum(
             String name, String surname, String realTeamName, int realTeamShirtNum);
+
+    Optional<Player> findByExternalId(Long externalId);
 }

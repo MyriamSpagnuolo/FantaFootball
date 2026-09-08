@@ -63,4 +63,10 @@ public class LeagueController {
     public List<PlayerResponse> getAvailablePlayers(@PathVariable Long leagueId, @AuthenticationPrincipal Jwt jwt) {
         return leagueService.getAvailablePlayers(leagueId, extractUserId(jwt));
     }
+
+    @GetMapping("/leagues/{leagueId}")
+    public LeagueResponse getLeague(@PathVariable Long leagueId, @AuthenticationPrincipal Jwt jwt) {
+        Long userId = extractUserId(jwt);
+        return leagueService.getLeagueById(leagueId, userId);
+    }
 }

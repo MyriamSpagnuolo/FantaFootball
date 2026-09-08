@@ -47,6 +47,20 @@ public class LeagueService {
         return playerRepository.findAvailableByLeagueId(leagueId).stream()
                 .map(PlayerResponse::fromEntity)
                 .toList();
+        this.teamRepository = teamRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public LeagueResponse getLeagueById(Long leagueId, Long requestingUserId) {
+        League league = leagueRepository.findById(leagueId)
+                .orElseThrow(() -> new NotFoundException("LEAGUE_NOT_FOUND", "Lega non trovata: " + leagueId));
+
+        boolean isMember = teamRepository.existsByUserIdAndLeagueId(requestingUserId, leagueId);
+        if (!isMember) {
+            throw new AccessDeniedException("Devi far parte della lega per vederne i dettagli");
+        }
+
+        return LeagueResponse.fromEntity(league);
     }
 
     @Transactional

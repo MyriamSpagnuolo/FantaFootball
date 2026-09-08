@@ -135,7 +135,7 @@ public class TeamService {
             throw new AccessDeniedException("Devi far parte della lega per vedere le squadre partecipanti");
         }
 
-        return teamRepository.findAllTeamByLeagueId(leagueId).stream()
+        return teamRepository.findAllTeamByLeagueIdOrderByTotalPointsDesc(leagueId).stream()
                 .map(TeamStandingResponse::fromEntity)
                 .toList();
     }
