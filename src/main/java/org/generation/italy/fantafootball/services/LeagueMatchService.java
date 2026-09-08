@@ -12,6 +12,7 @@ import org.generation.italy.fantafootball.model.repositories.LeagueMatchReposito
 import org.generation.italy.fantafootball.model.repositories.LeagueRepository;
 import org.generation.italy.fantafootball.model.repositories.MatchdayRepository;
 import org.generation.italy.fantafootball.model.repositories.TeamRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,5 +71,19 @@ public class LeagueMatchService {
         }
 
         return leagueMatchRepository.saveAll(matches);
+    }
+
+    @Transactional(readOnly = true)
+    public List<LeagueMatch> getCalendar(Long leagueId, Long requestingUserId) {
+        if (!leagueRepository.existsById(leagueId)) {
+            throw new NotFoundException("league_not_found", "Lega non trovata: " + leagueId);
+        }
+
+        boolean isMember = teamRepository.existsByUserIdAndLeagueId(requestingUserId, leagueId);
+        if (!isMember) {
+            throw new AccessDeniedException("Devi far parte della lega per vedere il calendario");
+        }
+
+        return leagueMatchRepository.findAllByLeagueIdOrderByRoundNumberAsc(leagueId);
     }
 }
