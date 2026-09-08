@@ -5,6 +5,8 @@ import org.generation.italy.fantafootball.model.dto.CreateLeagueRequest;
 import org.generation.italy.fantafootball.model.dto.CreateTeamRequest;
 import org.generation.italy.fantafootball.model.dto.LeagueResponse;
 import org.generation.italy.fantafootball.model.dto.PlayerResponse;
+import org.generation.italy.fantafootball.model.dto.PageResponse;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.generation.italy.fantafootball.model.dto.TeamStandingResponse;
 import org.generation.italy.fantafootball.services.LeagueService;
 import org.generation.italy.fantafootball.services.TeamService;
@@ -60,8 +62,10 @@ public class LeagueController {
     }
 
     @GetMapping("/leagues/{leagueId}/players/available")
-    public List<PlayerResponse> getAvailablePlayers(@PathVariable Long leagueId, @AuthenticationPrincipal Jwt jwt) {
-        return leagueService.getAvailablePlayers(leagueId, extractUserId(jwt));
+    public PageResponse<PlayerResponse> getAvailablePlayers(@PathVariable Long leagueId, @AuthenticationPrincipal Jwt jwt,
+                                                          @RequestParam(defaultValue = "0") int page,
+                                                          @RequestParam(defaultValue = "20") int size) {
+        return leagueService.getAvailablePlayers(leagueId, extractUserId(jwt), page, size);
     }
 
     @GetMapping("/leagues/{leagueId}")

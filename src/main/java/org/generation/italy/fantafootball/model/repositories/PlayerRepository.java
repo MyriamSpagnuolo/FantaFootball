@@ -6,7 +6,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.Optional;
 
 public interface PlayerRepository extends JpaRepository<Player, Long>, JpaSpecificationExecutor<Player> {
@@ -17,9 +18,8 @@ public interface PlayerRepository extends JpaRepository<Player, Long>, JpaSpecif
                 where tp.player = p and tp.league.id = :leagueId
                   and tp.transferDate is null
             )
-            order by p.id
             """)
-    List<Player> findAvailableByLeagueId(@Param("leagueId") Long leagueId);
+    Page<Player> findAvailableByLeagueId(@Param("leagueId") Long leagueId, Pageable pageable);
 
     Optional<Player> findByNameAndSurnameAndRealTeamNameAndRealTeamShirtNum(
             String name, String surname, String realTeamName, int realTeamShirtNum);
