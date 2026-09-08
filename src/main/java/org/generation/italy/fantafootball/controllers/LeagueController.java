@@ -57,4 +57,10 @@ public class LeagueController {
         Number userId = jwt.getClaim("uid");
         return teamService.getTeamsByLeague(leagueId, userId.longValue());
     }
+
+    @GetMapping("/leagues/{leagueId}")
+    public LeagueResponse getLeague(@PathVariable Long leagueId, @AuthenticationPrincipal Jwt jwt) {
+        Long userId = extractUserId(jwt);
+        return leagueService.getLeagueById(leagueId, userId);
+    }
 }

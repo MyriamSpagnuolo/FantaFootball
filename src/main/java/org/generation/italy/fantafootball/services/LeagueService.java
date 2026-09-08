@@ -7,6 +7,8 @@ import org.generation.italy.fantafootball.model.entities.League;
 import org.generation.italy.fantafootball.model.exceptions.NotFoundException;
 import org.generation.italy.fantafootball.model.repositories.AppUserRepository;
 import org.generation.italy.fantafootball.model.repositories.LeagueRepository;
+import org.generation.italy.fantafootball.model.repositories.TeamRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,10 +20,25 @@ public class LeagueService {
 
     private final LeagueRepository leagueRepository;
     private final AppUserRepository appUserRepository;
+    private final TeamRepository teamRepository;
 
-    public LeagueService(LeagueRepository leagueRepository, AppUserRepository appUserRepository) {
+    public LeagueService(LeagueRepository leagueRepository, AppUserRepository appUserRepository, TeamRepository teamRepository) {
         this.leagueRepository = leagueRepository;
         this.appUserRepository = appUserRepository;
+        this.teamRepository = teamRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public LeagueResponse getLeagueById(Long leagueId, Long requestingUserId) {
+        League league = leagueRepository.findById(leagueId)
+                .orElseThrow(() -> new NotFoundException("LEAGUE_NOT_FOUND", "Lega non trovata: " + leagueId));
+
+        boolean isMember = teamRepository.existsByUserIdAndLeagueId(requestingUserId, leagueId);
+        if (!isMember) {
+            throw new AccessDeniedException("Devi far parte della lega per vederne i dettagli");
+        }
+
+        return LeagueResponse.fromEntity(league);
     }
 
     @Transactional
