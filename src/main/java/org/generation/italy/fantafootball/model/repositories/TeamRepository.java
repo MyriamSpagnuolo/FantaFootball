@@ -16,6 +16,8 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
 
     List<Team> findAllTeamByLeagueId(Long leagueId);
 
+    List<Team> findAllTeamByLeagueIdOrderByTotalPointsDesc(Long leagueId);
+
     @EntityGraph(attributePaths = {"user", "league", "league.admin"})
     List<Team> findAllByUserIdOrderByLeagueNameAsc(Long userId);
 
