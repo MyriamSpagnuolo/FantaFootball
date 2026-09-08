@@ -34,4 +34,11 @@ public class LeagueMatchController {
         List<LeagueMatch> matches = leagueMatchService.generateCalendar(leagueId);
         return matches.stream().map(LeagueMatchDto::from).toList();
     }
+
+    @GetMapping
+    public List<LeagueMatchDto> getCalendar(@PathVariable Long leagueId, @AuthenticationPrincipal Jwt jwt) {
+        Long currentUserId = jwt.getClaim("uid");
+        List<LeagueMatch> matches = leagueMatchService.getCalendar(leagueId, currentUserId);
+        return matches.stream().map(LeagueMatchDto::from).toList();
+    }
 }
