@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 @Table(name = "player_results")
 public class PlayerResult {
 
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "player_results_id_seq_gen")
     @SequenceGenerator(

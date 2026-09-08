@@ -47,7 +47,6 @@ public class LeagueService {
         return playerRepository.findAvailableByLeagueId(leagueId).stream()
                 .map(PlayerResponse::fromEntity)
                 .toList();
-        this.teamRepository = teamRepository;
     }
 
     @Transactional(readOnly = true)
