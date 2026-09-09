@@ -138,6 +138,88 @@ class AvailablePlayersIntegrationTest {
         return "/api/leagues/" + league.getId() + "/players/available";
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"", "   ", "\t "})
+    void blankSearchReturnsEntireCatalog(String search) throws Exception {
+        search(search, 0, 20)
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.totalElements").value(2));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ari", "oss", "mArIo rOsSi", "  MARIO ROSSI  ", "io Ros"})
+    void searchesPartialNamesAndFullNameIgnoringCaseAndSurroundingSpaces(String search) throws Exception {
+        search(search, 0, 20)
+                .andExpect(jsonPath("$.content[0].id").value(first.getId()))
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    void searchFindsPlayerBeyondFirstUnfilteredPage() throws Exception {
+        for (long id = 103; id < 128; id++) {
+            players.save(new Player(id, "Nome", "Cognome", "Roma", 1, 10, false, PlayerRole.A));
+        }
+        Player target = players.save(new Player(128L, "Unico", "Bianchi", "Roma", 1, 10, false, PlayerRole.A));
+        search("bian", 0, 20)
+                .andExpect(jsonPath("$.content[0].id").value(target.getId()))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.hasNext").value(false));
+    }
+
+    @Test
+    void searchCombinesLeagueAvailabilityAndFilteredPagination() throws Exception {
+        Player third = players.save(new Player(103L, "Mario", "Rossi", "Roma", 1, 10, false, PlayerRole.A));
+        Player fourth = players.save(new Player(104L, "Mario", "Rossi", "Roma", 2, 10, false, PlayerRole.A));
+        own(team, first);
+        own(team(member, league("OTHER")), third);
+        for (int page = 0; page < 2; page++) {
+            search("mario", page, 1)
+                    .andExpect(jsonPath("$.content.length()").value(1))
+                    .andExpect(jsonPath("$.content[0].id").value(page == 0 ? third.getId() : fourth.getId()))
+                    .andExpect(jsonPath("$.page").value(page))
+                    .andExpect(jsonPath("$.size").value(1))
+                    .andExpect(jsonPath("$.totalElements").value(2))
+                    .andExpect(jsonPath("$.totalPages").value(2))
+                    .andExpect(jsonPath("$.hasNext").value(page == 0));
+        }
+        search("mario", 2, 1)
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.hasNext").value(false));
+    }
+
+    @Test
+    void noMatchReturnsZeroTotals() throws Exception {
+        search("inesistente", 0, 20)
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.totalPages").value(0))
+                .andExpect(jsonPath("$.hasNext").value(false));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"%", "_", "!", "\\", "!%_"})
+    void likeSpecialCharactersAreLiteral(String literal) throws Exception {
+        Player target = players.save(new Player(103L, "Special" + literal, "Test", "Roma", 1, 10, false, PlayerRole.A));
+        search(literal, 0, 20)
+                .andExpect(jsonPath("$.content[0].id").value(target.getId()))
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    void unauthenticatedSearchReturns401() throws Exception {
+        mvc.perform(get(url()).param("search", "Mario"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    private org.springframework.test.web.servlet.ResultActions search(String search, int page, int size) throws Exception {
+        return mvc.perform(get(url()).param("search", search)
+                        .param("page", Integer.toString(page)).param("size", Integer.toString(size))
+                        .with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
+                .andExpect(status().isOk());
+    }
+
     @Test
     void bothEndpointsReturnSeparatePagesAndTotals() throws Exception {
         for (String endpoint : new String[]{"/api/players", url()}) {

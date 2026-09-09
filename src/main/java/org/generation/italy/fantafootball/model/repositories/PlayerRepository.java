@@ -18,8 +18,13 @@ public interface PlayerRepository extends JpaRepository<Player, Long>, JpaSpecif
                 where tp.player = p and tp.league.id = :leagueId
                   and tp.transferDate is null
             )
+            and (:searchPattern is null
+                or lower(p.name) like :searchPattern escape '!'
+                or lower(p.surname) like :searchPattern escape '!'
+                or lower(concat(concat(p.name, ' '), p.surname)) like :searchPattern escape '!')
             """)
-    Page<Player> findAvailableByLeagueId(@Param("leagueId") Long leagueId, Pageable pageable);
+    Page<Player> findAvailableByLeagueId(@Param("leagueId") Long leagueId,
+                                       @Param("searchPattern") String searchPattern, Pageable pageable);
 
     Optional<Player> findByNameAndSurnameAndRealTeamNameAndRealTeamShirtNum(
             String name, String surname, String realTeamName, int realTeamShirtNum);
