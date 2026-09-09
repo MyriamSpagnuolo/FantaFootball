@@ -63,4 +63,15 @@ public class LineupType {
     public void setForwardNum(int forwardNum) {
         this.forwardNum = forwardNum;
     }
+
+    // Derivato dai tre numeri sopra, non persistito: nessuna colonna nuova
+    // in tabella. Fallisce se la riga non corrisponde a nessuno dei 7 moduli
+    // standard di Formation (non dovrebbe succedere, dato che lineup_type è
+    // seedata a mano solo con quei valori).
+    public Formation getFormation() {
+        return Formation.fromCounts(defenderNum, midfielderNum, forwardNum)
+                .orElseThrow(() -> new IllegalStateException(
+                        "LineupType id=" + id + " (" + defenderNum + "-" + midfielderNum + "-" + forwardNum
+                                + ") non corrisponde a nessuna Formation standard"));
+    }
 }

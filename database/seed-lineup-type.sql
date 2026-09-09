@@ -2,9 +2,13 @@
 -- Seed dei moduli standard di formazione (lineup_type).
 --
 -- Tabella di riferimento fissa, senza generazione automatica dell'id
--- (vedi commento in LineupType.java): nessun endpoint la gestisce, va
--- popolata a mano. Riavviabile: ON CONFLICT (id) DO NOTHING, quindi non
--- tocca righe gia' presenti ne' richiede un TRUNCATE preventivo.
+-- (vedi commento in LineupType.java): nessun endpoint la gestisce.
+-- Dalla introduzione di LineupTypeSeeder (CommandLineRunner) l'app la
+-- popola gia' da sola all'avvio (stessi id, tramite Formation enum);
+-- questo script resta utile solo per un DB non ancora avviato dall'app
+-- (es. accesso diretto/altri strumenti). Riavviabile: ON CONFLICT (id)
+-- DO NOTHING, quindi non tocca righe gia' presenti ne' richiede un
+-- TRUNCATE preventivo.
 --
 -- Stessi 7 moduli gia' presenti in seed-data.sql (che pero' tronca anche
 -- tutte le altre tabelle) — usare questo file per seedare solo lineup_type
