@@ -10,6 +10,7 @@ import org.generation.italy.fantafootball.model.specifications.PlayerSpecificati
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Locale;
 
 
 @Service
@@ -28,9 +29,9 @@ public class PlayerService {
 
         Specification<Player> specification = Specification.allOf();
 
-        if (filters.role() != null) {
+        if (filters.role() != null && !filters.role().isEmpty()) {
             specification = specification.and(
-                    PlayerSpecifications.hasRole(filters.role())
+                    PlayerSpecifications.hasAnyRole(filters.role())
             );
         }
 
@@ -52,11 +53,15 @@ public class PlayerService {
             );
         }
 
-        if (filters.realTeamName() != null) {
+        if (filters.realTeamName() != null && !filters.realTeamName().isEmpty()) {
             specification = specification.and(
-                    PlayerSpecifications.hasRealTeam(filters.realTeamName().trim())
+                    PlayerSpecifications.hasAnyRealTeam(filters.realTeamName())
             );
         }
+        if (filters.search() != null && !filters.search().isBlank()) {
+            specification = specification.and(PlayerSpecifications.nameContains(filters.search().trim()));
+        }
+        specification = specification.and(PlayerSpecifications.stableRoleOrdering());
 
         return PageResponse.fromPage(playerRepository.findAll(specification, pageable)
                 .map(PlayerResponse::fromEntity));
@@ -93,7 +98,7 @@ public class PlayerService {
             );
         }
 
-        if (filters.realTeamName() != null && filters.realTeamName().isBlank()) {
+        if (filters.realTeamName() != null && filters.realTeamName().stream().anyMatch(s -> s != null && s.isBlank())) {
             throw new BadRequestException(
                     "INVALID_REAL_TEAM",
                     "La squadra reale deve essere valorizzata"

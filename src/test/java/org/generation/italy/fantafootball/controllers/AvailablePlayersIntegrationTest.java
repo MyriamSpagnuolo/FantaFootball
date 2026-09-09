@@ -271,6 +271,34 @@ class AvailablePlayersIntegrationTest {
     }
 
     @Test
+    void playerCatalogSearchAndFilteredTotalsAreAppliedBeforePagination() throws Exception {
+        for (long id = 103; id < 128; id++) {
+            players.save(new Player(id, "Altro", "Nome", "Roma", 1, 10, false, PlayerRole.A));
+        }
+        Player target = players.save(new Player(128L, "Mario", "Bianchi", "Inter", 1, 10, false, PlayerRole.D));
+        mvc.perform(get("/api/players").param("search", "  MARIO BIAN  ").param("size", "20")
+                        .with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(target.getId()))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1));
+    }
+
+    @Test
+    void playerCatalogSupportsRepeatedRolesTeamsAndInjuredFilter() throws Exception {
+        players.save(new Player(103L, "P", "One", "Inter", 1, 10, true, PlayerRole.P));
+        players.save(new Player(104L, "D", "Two", "Milan", 1, 10, false, PlayerRole.D));
+        players.save(new Player(105L, "C", "Three", "Roma", 1, 10, false, PlayerRole.C));
+        mvc.perform(get("/api/players").param("role", "P", "D").param("realTeamName", "Inter", "Milan")
+                        .param("injured", "false")
+                        .with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].role").value("D"));
+    }
+
+    @Test
     void defaultsLimitResultsToTwentyPlayers() throws Exception {
         for (long id = 103; id < 128; id++) {
             players.save(new Player(id, "Nome", "Cognome", "Roma", 1, 10, false, PlayerRole.A));
