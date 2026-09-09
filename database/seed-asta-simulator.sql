@@ -3,10 +3,7 @@ BEGIN;
 -- ============================================================
 -- RESET DATI UTENTI / LEGA / SQUADRE
 -- ============================================================
--- CASCADE elimina automaticamente tutti i dati che dipendono
--- da app_users: team, league, league_match, lineup, trade,
--- league_invite, team_player, ecc.
---
+-- Svuota app_users e tutte le tabelle che dipendono da essa.
 -- La tabella player NON viene toccata.
 -- ============================================================
 
@@ -15,12 +12,6 @@ TRUNCATE TABLE app_users RESTART IDENTITY CASCADE;
 
 -- ============================================================
 -- UTENTI
--- ============================================================
--- Password di test per tutti:
--- Fantacalcio1!
---
--- Tutti gli utenti hanno ruolo USER.
--- Matteo De Cata è anche ADMIN della lega.
 -- ============================================================
 
 INSERT INTO app_users
@@ -78,7 +69,7 @@ VALUES
     (
         'PatrizioOfficial',
         'patrizioofficial@example.com',
-        '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+        '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldL17lhWy',
         TRUE,
         0
     );
@@ -87,18 +78,28 @@ VALUES
 -- ============================================================
 -- RUOLI
 -- ============================================================
+-- Gli ID vengono recuperati tramite username,
+-- quindi non assumiamo che Matteo abbia necessariamente ID 1.
+-- ============================================================
 
 INSERT INTO app_user_roles (user_id, role)
-VALUES
-    (1, 'ADMIN'),
-    (1, 'USER'),
-    (2, 'USER'),
-    (3, 'USER'),
-    (4, 'USER'),
-    (5, 'USER'),
-    (6, 'USER'),
-    (7, 'USER'),
-    (8, 'USER');
+SELECT id, 'ADMIN'
+FROM app_users
+WHERE username = 'Matteo De Cata';
+
+INSERT INTO app_user_roles (user_id, role)
+SELECT id, 'USER'
+FROM app_users
+WHERE username IN (
+                   'Matteo De Cata',
+                   'Matthew of Cat',
+                   'El Presi',
+                   'Pres',
+                   'Mr Andreotti',
+                   'MDC',
+                   'King of HufflePuff',
+                   'PatrizioOfficial'
+    );
 
 
 -- ============================================================
@@ -107,36 +108,125 @@ VALUES
 
 INSERT INTO league
 (name, invite_code, admin_user_id, creation_date, budget)
-VALUES
-    (
-        'Marius Rodgers League, No Robber',
-        'MARIUS2026',
-        1,
-        '2026-09-09 10:00:00',
-        500
-    );
+SELECT
+    'Marius Rodgers League, No Robber',
+    'MARIUS2026',
+    id,
+    '2026-09-09 10:00:00',
+    500
+FROM app_users
+WHERE username = 'Matteo De Cata';
 
 
 -- ============================================================
 -- SQUADRE
 -- ============================================================
--- Tutte le squadre appartengono alla stessa lega.
--- Budget iniziale: 500
--- Total points: 0
--- Nessun giocatore acquistato.
+-- Anche qui recuperiamo user_id e league_id tramite query.
 -- ============================================================
 
 INSERT INTO team
 (name, user_id, league_id, budget, total_points)
-VALUES
-    ('Paguri FC', 1, 1, 500, 0),
-    ('AC Frochok', 2, 1, 500, 0),
-    ('FirstTimeEverInSardinia', 3, 1, 500, 0),
-    ('120kg massa magra', 4, 1, 500, 0),
-    ('PistacchioMaNonQuelPistacchio', 5, 1, 500, 0),
-    ('AllGodsButDifferentCategories', 6, 1, 500, 0),
-    ('Sharon Sdikcs', 7, 1, 500, 0),
-    ('Matthew Oxford Money', 8, 1, 500, 0);
+SELECT
+    'Paguri FC',
+    u.id,
+    l.id,
+    500,
+    0
+FROM app_users u
+         CROSS JOIN league l
+WHERE u.username = 'Matteo De Cata'
+  AND l.name = 'Marius Rodgers League, No Robber'
+
+UNION ALL
+
+SELECT
+    'AC Frochok',
+    u.id,
+    l.id,
+    500,
+    0
+FROM app_users u
+         CROSS JOIN league l
+WHERE u.username = 'Matthew of Cat'
+  AND l.name = 'Marius Rodgers League, No Robber'
+
+UNION ALL
+
+SELECT
+    'FirstTimeEverInSardinia',
+    u.id,
+    l.id,
+    500,
+    0
+FROM app_users u
+         CROSS JOIN league l
+WHERE u.username = 'El Presi'
+  AND l.name = 'Marius Rodgers League, No Robber'
+
+UNION ALL
+
+SELECT
+    '120kg massa magra',
+    u.id,
+    l.id,
+    500,
+    0
+FROM app_users u
+         CROSS JOIN league l
+WHERE u.username = 'Pres'
+  AND l.name = 'Marius Rodgers League, No Robber'
+
+UNION ALL
+
+SELECT
+    'PistacchioMaNonQuelPistacchio',
+    u.id,
+    l.id,
+    500,
+    0
+FROM app_users u
+         CROSS JOIN league l
+WHERE u.username = 'Mr Andreotti'
+  AND l.name = 'Marius Rodgers League, No Robber'
+
+UNION ALL
+
+SELECT
+    'AllGodsButDifferentCategories',
+    u.id,
+    l.id,
+    500,
+    0
+FROM app_users u
+         CROSS JOIN league l
+WHERE u.username = 'MDC'
+  AND l.name = 'Marius Rodgers League, No Robber'
+
+UNION ALL
+
+SELECT
+    'Sharon Sdikcs',
+    u.id,
+    l.id,
+    500,
+    0
+FROM app_users u
+         CROSS JOIN league l
+WHERE u.username = 'King of HufflePuff'
+  AND l.name = 'Marius Rodgers League, No Robber'
+
+UNION ALL
+
+SELECT
+    'Matthew Oxford Money',
+    u.id,
+    l.id,
+    500,
+    0
+FROM app_users u
+         CROSS JOIN league l
+WHERE u.username = 'PatrizioOfficial'
+  AND l.name = 'Marius Rodgers League, No Robber';
 
 
 COMMIT;
