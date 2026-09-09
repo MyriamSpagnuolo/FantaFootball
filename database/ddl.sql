@@ -60,13 +60,13 @@ CREATE TABLE public.app_users (
 );
 
 CREATE TABLE public.password_reset_token (
-    id uuid NOT NULL,
-    user_id bigint NOT NULL,
-    token_hash character varying(64) NOT NULL,
-    created_at timestamp with time zone NOT NULL,
-    expires_at timestamp with time zone NOT NULL,
-    used_at timestamp with time zone,
-    CONSTRAINT ck_password_reset_token_expiry CHECK (expires_at > created_at)
+                                             id uuid NOT NULL,
+                                             user_id bigint NOT NULL,
+                                             token_hash character varying(64) NOT NULL,
+                                             created_at timestamp with time zone NOT NULL,
+                                             expires_at timestamp with time zone NOT NULL,
+                                             used_at timestamp with time zone,
+                                             CONSTRAINT ck_password_reset_token_expiry CHECK (expires_at > created_at)
 );
 
 
@@ -595,9 +595,6 @@ CREATE UNIQUE INDEX ux_league_invite_pending_unique ON public.league_invite USIN
 
 ALTER TABLE ONLY public.app_user_roles
     ADD CONSTRAINT fk_app_user_roles_user FOREIGN KEY (user_id) REFERENCES public.app_users(user_id) ON UPDATE CASCADE ON DELETE CASCADE;
-
-ALTER TABLE ONLY public.password_reset_token
-    ADD CONSTRAINT fk_password_reset_token_user FOREIGN KEY (user_id) REFERENCES public.app_users(user_id) ON DELETE CASCADE;
 
 
 --
