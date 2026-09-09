@@ -69,7 +69,7 @@ VALUES
     (
         'PatrizioOfficial',
         'patrizioofficial@example.com',
-        '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldL17lhWy',
+        '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
         TRUE,
         0
     );
