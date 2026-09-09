@@ -50,4 +50,13 @@ public interface TradeRepository extends JpaRepository<Trade, Long> {
       """)
     List<Trade> findAllByUserId(@Param("userId") Long userId);
 
+    @Query("""
+      SELECT t
+      FROM Trade t
+      WHERE t.proposingTeam.league.id = :leagueId
+         OR t.receivingTeam.league.id = :leagueId
+      ORDER BY t.proposalDate DESC
+      """)
+    List<Trade> findAllByLeagueId(@Param("leagueId") Long leagueId);
+
 }

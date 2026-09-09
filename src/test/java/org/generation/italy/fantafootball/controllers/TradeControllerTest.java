@@ -52,6 +52,16 @@ class TradeControllerTest {
     }
 
     @Test
+    void passesAuthenticatedUserWhenLoadingLeagueTrades() {
+        when(jwt.getClaim("uid")).thenReturn(42L);
+        when(tradeService.getAllByLeagueId(3L, 42L)).thenReturn(List.of());
+
+        controller.getLeagueTrades(3L, jwt);
+
+        verify(tradeService).getAllByLeagueId(3L, 42L);
+    }
+
+    @Test
     void acceptsTradeUsingAuthenticatedUser() {
         when(jwt.getClaim("uid")).thenReturn(42L);
 

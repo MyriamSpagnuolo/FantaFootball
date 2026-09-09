@@ -12,6 +12,7 @@ import org.generation.italy.fantafootball.model.exceptions.NotFoundException;
 import org.generation.italy.fantafootball.model.repositories.TradeRepository;
 import org.generation.italy.fantafootball.model.repositories.TeamPlayerRepository;
 import org.generation.italy.fantafootball.model.repositories.TeamRepository;
+import org.generation.italy.fantafootball.model.repositories.LeagueRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -24,12 +25,14 @@ public class TradeService {
     private final TradeRepository tradeRepository;
     private final TeamPlayerRepository teamPlayerRepository;
     private final TeamRepository teamRepository;
+    private final LeagueRepository leagueRepository;
 
     public TradeService(TradeRepository tradeRepository, TeamPlayerRepository teamPlayerRepository,
-                        TeamRepository teamRepository) {
+                        TeamRepository teamRepository, LeagueRepository leagueRepository) {
         this.tradeRepository = tradeRepository;
         this.teamPlayerRepository = teamPlayerRepository;
         this.teamRepository = teamRepository;
+        this.leagueRepository = leagueRepository;
     }
 
     public List<TradeDto> getAllByUserId(Long userId) {
@@ -49,6 +52,17 @@ public class TradeService {
     public List<TradeDto> getTradeHistoryByTeamId(Long teamId, Long userId) {
         findOwnedTeam(teamId, userId);
         return toDtos(tradeRepository.findTradeHistoryByTeamId(teamId));
+    }
+
+    public List<TradeDto> getAllByLeagueId(Long leagueId, Long userId) {
+        if (!leagueRepository.existsById(leagueId)) {
+            throw notFound("league_not_found", "League not found");
+        }
+        boolean isMember = teamRepository.existsByUserIdAndLeagueId(userId, leagueId);
+        if (!isMember) {
+            throw new AccessDeniedException("You must be a member of this league to see its trades");
+        }
+        return toDtos(tradeRepository.findAllByLeagueId(leagueId));
     }
 
     @Transactional

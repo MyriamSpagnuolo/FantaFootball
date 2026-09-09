@@ -2,11 +2,14 @@ package org.generation.italy.fantafootball.services;
 
 import org.generation.italy.fantafootball.model.dto.CreateLeagueRequest;
 import org.generation.italy.fantafootball.model.dto.LeagueResponse;
+import org.generation.italy.fantafootball.model.dto.PlayerResponse;
+import org.generation.italy.fantafootball.model.dto.PageResponse;
 import org.generation.italy.fantafootball.model.entities.AppUser;
 import org.generation.italy.fantafootball.model.entities.League;
 import org.generation.italy.fantafootball.model.exceptions.NotFoundException;
 import org.generation.italy.fantafootball.model.repositories.AppUserRepository;
 import org.generation.italy.fantafootball.model.repositories.LeagueRepository;
+import org.generation.italy.fantafootball.model.repositories.PlayerRepository;
 import org.generation.italy.fantafootball.model.repositories.TeamRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -21,11 +24,29 @@ public class LeagueService {
     private final LeagueRepository leagueRepository;
     private final AppUserRepository appUserRepository;
     private final TeamRepository teamRepository;
+    private final PlayerRepository playerRepository;
 
-    public LeagueService(LeagueRepository leagueRepository, AppUserRepository appUserRepository, TeamRepository teamRepository) {
+    public LeagueService(LeagueRepository leagueRepository, AppUserRepository appUserRepository,
+                         TeamRepository teamRepository, PlayerRepository playerRepository) {
         this.leagueRepository = leagueRepository;
         this.appUserRepository = appUserRepository;
         this.teamRepository = teamRepository;
+        this.playerRepository = playerRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<PlayerResponse> getAvailablePlayers(Long leagueId, Long requestingUserId, int page, int size) {
+        League league = leagueRepository.findById(leagueId)
+                .orElseThrow(() -> new NotFoundException("LEAGUE_NOT_FOUND", "Lega non trovata: " + leagueId));
+
+        boolean isAdmin = league.getAdmin().getId().equals(requestingUserId);
+        if (!isAdmin && !teamRepository.existsByUserIdAndLeagueId(requestingUserId, leagueId)) {
+            throw new AccessDeniedException("Devi far parte della lega per vedere i giocatori disponibili");
+        }
+
+        var pageable = PlayerPagination.of(page, size);
+        return PageResponse.fromPage(playerRepository.findAvailableByLeagueId(leagueId, pageable)
+                .map(PlayerResponse::fromEntity));
     }
 
     @Transactional(readOnly = true)

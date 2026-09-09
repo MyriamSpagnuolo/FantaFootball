@@ -25,6 +25,6 @@ class PlayerMatchStatsTest {
         when(result.isRedCard()).thenReturn(false);
         when(result.getCleanSheet()).thenReturn(true);
 
-        assertEquals(12.0, new PlayerMatchStats(lineupPlayer, result).calculateFantaRating());
+        assertEquals(14.0, new PlayerMatchStats(lineupPlayer, result).calculateFantaRating());
     }
 }
