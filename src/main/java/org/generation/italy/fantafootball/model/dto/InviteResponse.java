@@ -8,7 +8,12 @@ public record InviteResponse(
         Long id, Long leagueId, Long invitedByUserId, Long invitedUserId,
         String status, LocalDateTime sentDate, LocalDateTime responseDate
 ) {
-    //aggiungere spiegazione del metodo
+    /*
+     * Converte un'Entity LeagueInvite (con le sue relazioni JPA verso League e AppUser)
+     * nel DTO di risposta da restituire al client. Estrae solo gli id delle entità collegate
+     * (leagueId, invitedByUserId, invitedUserId) invece di esporre gli oggetti interi,
+     * e trasforma l'enum LeagueInviteStatus in stringa (es. "PENDING") per la serializzazione JSON.
+     */
     public static InviteResponse fromEntity(LeagueInvite invite) {
         return new InviteResponse(
                 invite.getId(),

@@ -59,60 +59,78 @@ public class ExternalAuctionImportService {
 
     private Player findPlayer(Long id) {
         if (id == null) {
-            throw new BadRequestException("invalid_player_id", "L'ID del giocatore è obbligatorio");
+            throw new BadRequestException(
+                    "invalid_player_id",
+                    "L'ID del giocatore è obbligatorio");
         }
         return playerRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("player_not_found", "Giocatore non esistente"));
+                .orElseThrow(() -> new NotFoundException(
+                        "player_not_found",
+                        "Giocatore non esistente"));
     }
 
     private void validatePlayerAvailable(Player player, League league) {
         if (teamPlayerRepository.existsByPlayer_IdAndLeague_IdAndTransferDateIsNull(
                 player.getId(), league.getId())) {
-            throw new ConflictException("player_already_owned",
+            throw new ConflictException(
+                    "player_already_owned",
                     "Il giocatore è già stato acquistato nella lega");
         }
     }
 
     private void validateBudget(int purchasePrice, Team team) {
         if (purchasePrice > team.getBudget()) {
-            throw new ConflictException("budget_too_low",
+            throw new ConflictException(
+                    "budget_too_low",
                     "Impossibile eseguire l'operazione: budget insufficiente");
         }
     }
 
     private void validatePurchaseRequest(PurchasePlayerRequest request) {
         if (request == null || request.purchasePrice() == null || request.purchasePrice() < 0) {
-            throw new BadRequestException("invalid_purchase_price",
+            throw new BadRequestException(
+                    "invalid_purchase_price",
                     "Il prezzo di acquisto deve essere maggiore o uguale a zero");
         }
     }
 
     private League findLeague(Long id) {
         if (id == null) {
-            throw new BadRequestException("invalid_league_id", "L'ID della lega è obbligatorio");
+            throw new BadRequestException(
+                    "invalid_league_id",
+                    "L'ID della lega è obbligatorio");
         }
         return leagueRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("league_not_found", "Lega non esistente"));
+                .orElseThrow(() -> new NotFoundException(
+                        "league_not_found",
+                        "Lega non esistente"));
     }
 
     private Team findTeam(Long id) {
         if (id == null) {
-            throw new BadRequestException("invalid_team_id", "L'ID della squadra è obbligatorio");
+            throw new BadRequestException(
+                    "invalid_team_id",
+                    "L'ID della squadra è obbligatorio");
         }
         return teamRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("team_not_found", "Questo team non esiste"));
+                .orElseThrow(() -> new NotFoundException(
+                        "team_not_found",
+                        "Questo team non esiste"));
     }
 
     private void validateAdmin(League league, Long authenticatedUserId) {
         if (!Objects.equals(league.getAdmin().getId(), authenticatedUserId)) {
-            throw new AccessDeniedException("Solo l'admin della lega può importare giocatori");
+            throw new AccessDeniedException(
+                    "Solo l'admin della lega può importare giocatori");
         }
     }
 
     private void validateTeamBelongsToLeague(Team team, League league) {
         if (!Objects.equals(team.getLeague().getId(), league.getId())) {
-            throw new BadRequestException("league_id_not_valid",
+            throw new BadRequestException(
+                    "league_id_not_valid",
                     "Il team non appartiene alla lega indicata");
         }
     }
+
 }

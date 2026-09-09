@@ -24,6 +24,7 @@ public class DefaultHeadUserInitializer implements CommandLineRunner {
         // Read env vars. Do NOT default the password to an insecure value.
         String username = System.getenv().getOrDefault("APP_HEAD_USERNAME", "head");
         String password = System.getenv().get("APP_HEAD_PASSWORD"); // intentionally no default
+        String email = System.getenv().getOrDefault("APP_HEAD_EMAIL", "head@localhost");
 
         if (appUserRepository.existsByUsername(username)) {
             return;
@@ -44,6 +45,7 @@ public class DefaultHeadUserInitializer implements CommandLineRunner {
 
         AppUser user = new AppUser();
         user.setUsername(username);
+        user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setEnabled(true);
         user.setRoles(Set.of(UserRole.ADMIN));

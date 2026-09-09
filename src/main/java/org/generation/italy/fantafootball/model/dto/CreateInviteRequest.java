@@ -1,12 +1,10 @@
 package org.generation.italy.fantafootball.model.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record CreateInviteRequest(
-        @NotNull(message = "L'utente che invita è obbligatorio")
-        Long invitedByUserId,
-
-        @NotNull(message = "L'utente invitato è obbligatorio")
-        Long invitedUserId
+        @NotBlank(message = "Lo username dell'utente da invitare è obbligatorio")
+        String invitedUsername
 ) {
 }

@@ -61,14 +61,18 @@ public class AuthService {
         if (request.password() == null || request.password().isBlank()) {
             throw new BadRequestException("invalid_request", "Password is required");
         }
-        if (appUserRepository.existsByUsername(request.username())) {
+        if (appUserRepository.existsByUsernameIgnoreCase(request.username())) {
             throw new ConflictException("username_unavailable", "Username already exists: " + request.username());
+        }
+        if (appUserRepository.existsByEmailIgnoreCase(request.email())) {
+            throw new ConflictException("email_unavailable", "Email already registered");
         }
 
 
 
         AppUser user = new AppUser();
         user.setUsername(request.username());
+        user.setEmail(request.email().trim().toLowerCase(Locale.ROOT));
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setEnabled(true);
         user.setRoles(Set.of(UserRole.USER));

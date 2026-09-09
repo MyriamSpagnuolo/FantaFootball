@@ -38,13 +38,13 @@ public class Player {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "position", length = 1, nullable = false)
-    private PlayerRole position;
+    private PlayerRole role;
 
     public Player() {
     }
 
     public Player(Long externalId, String name, String surname, String realTeamName, int realTeamShirtNum,
-                  int price, boolean injured, PlayerRole position) {
+                  int price, boolean injured, PlayerRole role) {
         this.externalId = externalId;
         this.name = name;
         this.surname = surname;
@@ -52,7 +52,7 @@ public class Player {
         this.realTeamShirtNum = realTeamShirtNum;
         this.price = price;
         this.injured = injured;
-        this.position = position;
+        this.role = role;
     }
 
     public Long getId() {
@@ -115,11 +115,11 @@ public class Player {
         this.injured = injured;
     }
 
-    public PlayerRole getPosition() {
-        return position;
+    public PlayerRole getRole() {
+        return role;
     }
 
-    public void setPosition(PlayerRole position) {
-        this.position = position;
+    public void setRole(PlayerRole role) {
+        this.role = role;
     }
 }

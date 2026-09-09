@@ -3,6 +3,8 @@ package org.generation.italy.fantafootball.model.repositories;
 import org.generation.italy.fantafootball.model.entities.Trade;
 import org.generation.italy.fantafootball.model.entities.TradeStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -11,6 +13,10 @@ import java.util.List;
 public interface TradeRepository extends JpaRepository<Trade, Long> {
     List<Trade> findByProposingTeam_IdAndStatus(Long teamId, TradeStatus status);
     List<Trade> findByReceivingTeam_IdAndStatus(Long teamId, TradeStatus status);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select t from Trade t where t.id = :tradeId")
+    java.util.Optional<Trade> findByIdForUpdate(@Param("tradeId") Long tradeId);
 
     @Query("""
       SELECT t

@@ -2,7 +2,6 @@ package org.generation.italy.fantafootball.services;
 
 import org.generation.italy.fantafootball.model.dto.CreateInviteRequest;
 import org.generation.italy.fantafootball.model.dto.InviteResponse;
-import org.generation.italy.fantafootball.model.dto.RespondToInviteRequest;
 import org.generation.italy.fantafootball.model.entities.AppUser;
 import org.generation.italy.fantafootball.model.entities.League;
 import org.generation.italy.fantafootball.model.entities.LeagueInvite;
@@ -40,41 +39,33 @@ public class LeagueInviteService {
     }
 
     @Transactional
-    public InviteResponse sendInvite(Long leagueId, CreateInviteRequest request) {
-        if (request.invitedByUserId().equals(request.invitedUserId())) {
-            throw new BadRequestException("SAME_USER", "Non puoi invitare te stesso");
-        }
+    public InviteResponse sendInvite(Long leagueId, CreateInviteRequest request, Long invitedByUserId) {
+        League league = leagueRepository.findById(leagueId)
+                .orElseThrow(() -> new NotFoundException("LEAGUE_NOT_FOUND", "Lega non trovata: " + leagueId));
 
-        Optional<League> existingLeague = leagueRepository.findById(leagueId);
-        if (existingLeague.isEmpty()) {
-            throw new NotFoundException("LEAGUE_NOT_FOUND", "Lega non trovata: " + leagueId);
-        }
-        League league = existingLeague.get();
-
-        if (!league.getAdmin().getId().equals(request.invitedByUserId())) {
+        if (!league.getAdmin().getId().equals(invitedByUserId)) {
             throw new ConflictException("NOT_LEAGUE_ADMIN", "Solo l'admin della lega può inviare inviti");
         }
 
-        Optional<AppUser> existingInvitedBy = appUserRepository.findById(request.invitedByUserId());
-        if (existingInvitedBy.isEmpty()) {
-            throw new NotFoundException("USER_NOT_FOUND", "Utente non trovato: " + request.invitedByUserId());
-        }
-        AppUser invitedBy = existingInvitedBy.get();
+        AppUser invitedBy = appUserRepository.findById(invitedByUserId)
+                .orElseThrow(() -> new NotFoundException("USER_NOT_FOUND", "Utente non trovato: " + invitedByUserId));
 
-        Optional<AppUser> existingInvitedUser = appUserRepository.findById(request.invitedUserId());
-        if (existingInvitedUser.isEmpty()) {
-            throw new NotFoundException("USER_NOT_FOUND", "Utente non trovato: " + request.invitedUserId());
+        AppUser invitedUser = appUserRepository.findByUsername(request.invitedUsername())
+                .orElseThrow(() -> new NotFoundException("USER_NOT_FOUND",
+                        "Utente non trovato: " + request.invitedUsername()));
+
+        if (invitedBy.getId().equals(invitedUser.getId())) {
+            throw new BadRequestException("SAME_USER", "Non puoi invitare te stesso");
         }
-        AppUser invitedUser = existingInvitedUser.get();
 
         boolean pendingExists = leagueInviteRepository.existsByLeagueIdAndInvitedUserIdAndStatus(
-                leagueId, request.invitedUserId(), LeagueInviteStatus.PENDING);
+                leagueId, invitedUser.getId(), LeagueInviteStatus.PENDING);
         if (pendingExists) {
             throw new ConflictException("DUPLICATE_PENDING_INVITE",
                     "Esiste già un invito in sospeso per questo utente in questa lega");
         }
 
-        boolean alreadyHasTeam = teamRepository.existsByUserIdAndLeagueId(request.invitedUserId(), leagueId);
+        boolean alreadyHasTeam = teamRepository.existsByUserIdAndLeagueId(invitedUser.getId(), leagueId);
         if (alreadyHasTeam) {
             throw new ConflictException("USER_ALREADY_HAS_TEAM",
                     "Questo utente ha già una squadra in questa lega");
@@ -88,17 +79,13 @@ public class LeagueInviteService {
     }
 
     @Transactional
-    public InviteResponse acceptInvite(Long inviteId, RespondToInviteRequest request) {
-        Optional<LeagueInvite> existingInvite = leagueInviteRepository.findById(inviteId);
-        if (existingInvite.isEmpty()) {
-            throw new NotFoundException("INVITE_NOT_FOUND", "Invito non trovato: " + inviteId);
-        }
-        LeagueInvite invite = existingInvite.get();
+    public InviteResponse acceptInvite(Long inviteId, Long respondingUserId) {
+        LeagueInvite invite = leagueInviteRepository.findById(inviteId)
+                .orElseThrow(() -> new NotFoundException("INVITE_NOT_FOUND", "Invito non trovato: " + inviteId));
 
-        if (!invite.getInvitedUser().getId().equals(request.respondingUserId())) {
+        if (!invite.getInvitedUser().getId().equals(respondingUserId)) {
             throw new ConflictException("NOT_YOUR_INVITE", "Questo invito non appartiene a questo utente");
         }
-
         if (invite.getStatus() != LeagueInviteStatus.PENDING) {
             throw new ConflictException("INVITE_ALREADY_RESPONDED", "Hai già risposto a questo invito");
         }
@@ -106,22 +93,17 @@ public class LeagueInviteService {
         invite.setStatus(LeagueInviteStatus.ACCEPTED);
         invite.setResponseDate(LocalDateTime.now());
 
-        LeagueInvite saved = leagueInviteRepository.save(invite);
-        return InviteResponse.fromEntity(saved);
+        return InviteResponse.fromEntity(leagueInviteRepository.save(invite));
     }
 
     @Transactional
-    public InviteResponse declineInvite(Long inviteId, RespondToInviteRequest request) {
-        Optional<LeagueInvite> existingInvite = leagueInviteRepository.findById(inviteId);
-        if (existingInvite.isEmpty()) {
-            throw new NotFoundException("INVITE_NOT_FOUND", "Invito non trovato: " + inviteId);
-        }
-        LeagueInvite invite = existingInvite.get();
+    public InviteResponse declineInvite(Long inviteId, Long respondingUserId) {
+        LeagueInvite invite = leagueInviteRepository.findById(inviteId)
+                .orElseThrow(() -> new NotFoundException("INVITE_NOT_FOUND", "Invito non trovato: " + inviteId));
 
-        if (!invite.getInvitedUser().getId().equals(request.respondingUserId())) {
+        if (!invite.getInvitedUser().getId().equals(respondingUserId)) {
             throw new ConflictException("NOT_YOUR_INVITE", "Questo invito non appartiene a questo utente");
         }
-
         if (invite.getStatus() != LeagueInviteStatus.PENDING) {
             throw new ConflictException("INVITE_ALREADY_RESPONDED", "Hai già risposto a questo invito");
         }
@@ -129,8 +111,7 @@ public class LeagueInviteService {
         invite.setStatus(LeagueInviteStatus.DECLINED);
         invite.setResponseDate(LocalDateTime.now());
 
-        LeagueInvite saved = leagueInviteRepository.save(invite);
-        return InviteResponse.fromEntity(saved);
+        return InviteResponse.fromEntity(leagueInviteRepository.save(invite));
     }
 
     @Transactional(readOnly = true)
