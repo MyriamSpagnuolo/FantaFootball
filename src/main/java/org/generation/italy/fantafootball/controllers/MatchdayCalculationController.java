@@ -16,7 +16,7 @@ public class MatchdayCalculationController {
         this.calculationService = calculationService;
     }
 
-    @GetMapping("/{lineupId}/calculation")
+    @GetMapping("/{lineupId}/score")
     public LineupCalculationResponse calculate(@PathVariable Long lineupId) {
         double score = calculationService.calculateLineupScore(lineupId);
         return new LineupCalculationResponse(score, GoalsCalculator.calculateGoals(score));

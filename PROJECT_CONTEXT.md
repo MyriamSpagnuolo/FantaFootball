@@ -117,11 +117,34 @@ questo servizio.
   browser che chiama direttamente LeagueSim, andrà aggiunta una config CORS
 - Nessuna gestione di ruoli/utenti finali, solo autenticazione service-to-service
 
+## Come fantafootball consuma questi dati: Lineup e calcolo del fantavoto
+
+Lato fantafootball, l'entità `Lineup` è la formazione che una squadra (`Team`)
+schiera per una propria partita di lega (`LeagueMatch`; vincolo univoco
+`team_id, league_match_id` — una sola formazione per squadra per partita).
+Contiene un modulo (`LineupType`: numero di difensori/centrocampisti/attaccanti,
+1 portiere implicito) e la lista di `LineupPlayer` (titolari/panchina, con
+subentri per ruolo se un titolare non ha giocato).
+
+Il collegamento con LeagueSim è indiretto, tramite la sincronizzazione già
+descritta sopra: i giocatori schierabili in una `Lineup` sono `TeamPlayer` che
+puntano a un `Player` di fantafootball, il cui `externalId` è l'`id` del
+`Player` di LeagueSim (upsert per `externalId`, mai per nome/cognome). Il voto
+di ogni giocatore per una giornata viene letto da `PlayerResult` (importato da
+`/api/matchdays/{number}/results` di LeagueSim) e aggregato in un fantavoto di
+formazione da `MatchdayCalculationService`, esposto da
+`GET /api/lineups/{lineupId}/score`. La formazione è modificabile
+(`POST`/`PUT`/`GET` su `/api/teams/{teamId}/matches/{leagueMatchId}/lineup`,
+lato fantafootball) solo finché la `Matchday` reale collegata non risulta
+`closed` — dopo la chiusura il voto diventa calcolabile e la formazione si
+blocca.
+
 ## Punti da chiarire quando si progetta l'integrazione
 
 - Come/quando fantafootball invoca `POST /api/admin/matchdays/{n}/simulate`
   (schedulazione autonoma di LeagueSim vs. trigger esterno da fantafootball)
-- Se fantafootball ha bisogno di un mapping stabile tra `Player.id` di
-  LeagueSim e le proprie entità (es. "calciatore fantacalcio") — al momento
-  l'unico identificatore condiviso è `Player.id`/`Team.name`
+- ~~Se fantafootball ha bisogno di un mapping stabile tra `Player.id` di
+  LeagueSim e le proprie entità~~ — risolto: `Player.externalId` in
+  fantafootball è l'`id` del `Player` LeagueSim, upsert per quella chiave (vedi
+  sezione "Come fantafootball consuma questi dati" sopra)
 - Se serve un endpoint aggregato (es. classifica, storico) non ancora presente

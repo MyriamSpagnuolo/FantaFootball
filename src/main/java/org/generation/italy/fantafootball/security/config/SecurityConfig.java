@@ -1,7 +1,8 @@
-package org.generation.italy.fantafootball.security;
+package org.generation.italy.fantafootball.security.config;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import org.generation.italy.fantafootball.model.repositories.AppUserRepository;
+import org.generation.italy.fantafootball.security.*;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

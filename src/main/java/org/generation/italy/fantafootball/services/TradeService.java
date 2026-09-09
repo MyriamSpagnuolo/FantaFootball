@@ -7,13 +7,14 @@ import org.generation.italy.fantafootball.model.entities.Team;
 import org.generation.italy.fantafootball.model.entities.TeamPlayer;
 import org.generation.italy.fantafootball.model.entities.Trade;
 import org.generation.italy.fantafootball.model.entities.TradeStatus;
+import org.generation.italy.fantafootball.model.exceptions.ConflictException;
+import org.generation.italy.fantafootball.model.exceptions.NotFoundException;
 import org.generation.italy.fantafootball.model.repositories.TradeRepository;
 import org.generation.italy.fantafootball.model.repositories.TeamPlayerRepository;
 import org.generation.italy.fantafootball.model.repositories.TeamRepository;
-import org.springframework.http.HttpStatus;
+import org.generation.italy.fantafootball.model.repositories.LeagueRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -24,12 +25,14 @@ public class TradeService {
     private final TradeRepository tradeRepository;
     private final TeamPlayerRepository teamPlayerRepository;
     private final TeamRepository teamRepository;
+    private final LeagueRepository leagueRepository;
 
     public TradeService(TradeRepository tradeRepository, TeamPlayerRepository teamPlayerRepository,
-                        TeamRepository teamRepository) {
+                        TeamRepository teamRepository, LeagueRepository leagueRepository) {
         this.tradeRepository = tradeRepository;
         this.teamPlayerRepository = teamPlayerRepository;
         this.teamRepository = teamRepository;
+        this.leagueRepository = leagueRepository;
     }
 
     public List<TradeDto> getAllByUserId(Long userId) {
@@ -49,6 +52,17 @@ public class TradeService {
     public List<TradeDto> getTradeHistoryByTeamId(Long teamId, Long userId) {
         findOwnedTeam(teamId, userId);
         return toDtos(tradeRepository.findTradeHistoryByTeamId(teamId));
+    }
+
+    public List<TradeDto> getAllByLeagueId(Long leagueId, Long userId) {
+        if (!leagueRepository.existsById(leagueId)) {
+            throw notFound("league_not_found", "League not found");
+        }
+        boolean isMember = teamRepository.existsByUserIdAndLeagueId(userId, leagueId);
+        if (!isMember) {
+            throw new AccessDeniedException("You must be a member of this league to see its trades");
+        }
+        return toDtos(tradeRepository.findAllByLeagueId(leagueId));
     }
 
     @Transactional
@@ -79,7 +93,7 @@ public class TradeService {
     @Transactional
     public void rejectTradeById(Long tradeId, Long userId) {
         Trade trade = tradeRepository.findByIdForUpdate(tradeId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trade not found"));
+                .orElseThrow(() -> notFound("trade_not_found", "Trade not found"));
         validateParticipant(trade, userId);
         validatePending(trade, "rejected");
 
@@ -90,7 +104,7 @@ public class TradeService {
     @Transactional
     public void acceptTradeById(Long tradeId, Long userId) {
         Trade trade = tradeRepository.findByIdForUpdate(tradeId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trade not found"));
+                .orElseThrow(() -> notFound("trade_not_found", "Trade not found"));
         validateReceiver(trade, userId);
         validatePending(trade, "accepted");
         validatePlayersStillAvailable(trade);
@@ -100,12 +114,12 @@ public class TradeService {
 
         trade.setStatus(TradeStatus.ACCEPTED);
         tradeRepository.save(trade);
+        cancelConflictingPendingTrades(trade, tradeId);
     }
 
     private Team findTeamOwnedByUserInLeague(Long userId, Team receivingTeam) {
         return teamRepository.findFirstByUserIdAndLeagueId(userId, receivingTeam.getLeague().getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN,
-                        "You do not own a team in this league"));
+                .orElseThrow(() -> new AccessDeniedException("You do not own a team in this league"));
     }
 
     private Team findOwnedTeam(Long teamId, Long userId) {
@@ -114,8 +128,7 @@ public class TradeService {
                     .orElseThrow(() -> notFound("team_not_found", "Team not found"));
         }
         return teamRepository.findByIdAndUserId(teamId, userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN,
-                        "You do not own this team"));
+                .orElseThrow(() -> new AccessDeniedException("You do not own this team"));
     }
 
     private TeamPlayer findPlayer(Long playerId) {
@@ -154,25 +167,24 @@ public class TradeService {
         Team second = first == trade.getProposingTeam()
                 ? trade.getReceivingTeam() : trade.getProposingTeam();
         teamRepository.findByIdForUpdate(first.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "A trade team no longer exists"));
+                .orElseThrow(() -> conflict("trade_team_missing", "A trade team no longer exists"));
         teamRepository.findByIdForUpdate(second.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "A trade team no longer exists"));
+                .orElseThrow(() -> conflict("trade_team_missing", "A trade team no longer exists"));
     }
 
-    private ResponseStatusException conflict(String code, String message) {
-        return new ResponseStatusException(HttpStatus.CONFLICT, code + ": " + message);
+    private ConflictException conflict(String code, String message) {
+        return new ConflictException(code, message);
     }
 
-    private ResponseStatusException notFound(String code, String message) {
-        return new ResponseStatusException(HttpStatus.NOT_FOUND, code + ": " + message);
+    private NotFoundException notFound(String code, String message) {
+        return new NotFoundException(code, message);
     }
 
     private void validateParticipant(Trade trade, Long userId) {
         boolean participant = Objects.equals(trade.getProposingTeam().getUser().getId(), userId)
                 || Objects.equals(trade.getReceivingTeam().getUser().getId(), userId);
         if (!participant) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "You are not allowed to modify this trade");
+            throw new AccessDeniedException("You are not allowed to modify this trade");
         }
     }
 
@@ -184,7 +196,7 @@ public class TradeService {
 
     private void validatePending(Trade trade, String operation) {
         if (trade.getStatus() != TradeStatus.PENDING) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
+            throw new ConflictException("trade_not_pending",
                     "Only pending trade requests can be " + operation);
         }
     }
@@ -197,7 +209,7 @@ public class TradeService {
                 && Objects.equals(requestedPlayer.getTeam().getId(), trade.getReceivingTeam().getId())
                 && Objects.equals(offeredPlayer.getTeam().getId(), trade.getProposingTeam().getId());
         if (!available) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
+            throw new ConflictException("players_not_available",
                     "The players in this trade are no longer available");
         }
     }
@@ -211,7 +223,7 @@ public class TradeService {
         long payment = Math.abs(amount);
 
         if (payment > payer.getBudget()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
+            throw new ConflictException("insufficient_budget",
                     "Insufficient budget to accept this trade");
         }
 
@@ -219,7 +231,7 @@ public class TradeService {
         long receivingBudget = receivingTeam.getBudget() + amount;
         if (proposingBudget < 0 || receivingBudget < 0
                 || proposingBudget > Integer.MAX_VALUE || receivingBudget > Integer.MAX_VALUE) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "The resulting budget is invalid");
+            throw new ConflictException("invalid_budget", "The resulting budget is invalid");
         }
         proposingTeam.setBudget((int) proposingBudget);
         receivingTeam.setBudget((int) receivingBudget);
@@ -236,6 +248,12 @@ public class TradeService {
                 requestedPlayer.getPlayer(), transferDate, requestedPlayer.getPurchasePrice()));
         teamPlayerRepository.save(new TeamPlayer(trade.getReceivingTeam(), trade.getReceivingTeam().getLeague(),
                 offeredPlayer.getPlayer(), transferDate, offeredPlayer.getPurchasePrice()));
+    }
+
+    private void cancelConflictingPendingTrades(Trade acceptedTrade, Long acceptedTradeId) {
+        tradeRepository.cancelPendingTradesInvolvingPlayers(
+                List.of(acceptedTrade.getRequestedPlayer().getId(), acceptedTrade.getOfferedPlayer().getId()),
+                acceptedTradeId);
     }
 
     private List<TradeDto> toDtos(List<Trade> trades) {

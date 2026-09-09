@@ -11,4 +11,8 @@ public interface TeamPlayerRepository extends JpaRepository<TeamPlayer,Long> {
     List<TeamPlayer> findAllByTeamId(Long teamId);
 
     boolean existsByPlayer_IdAndLeague_IdAndTransferDateIsNull(Long playerId, Long leagueId);
+
+    // Giocatori attivi (non ceduti) di una squadra, filtrati per id: usato per validare
+    // la formazione, cosi' non si puo' schierare un TeamPlayer di un'altra squadra o gia' svincolato.
+    List<TeamPlayer> findAllByIdInAndTeamIdAndTransferDateIsNull(List<Long> ids, Long teamId);
 }

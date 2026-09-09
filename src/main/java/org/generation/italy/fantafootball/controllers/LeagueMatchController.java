@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/leagues/{leagueId}/calendar")
+@RequestMapping("/api/leagues/{leagueId}/matches")
 public class LeagueMatchController {
     private final LeagueMatchService leagueMatchService;
     private final LeagueRepository leagueRepository;
@@ -32,6 +32,13 @@ public class LeagueMatchController {
         }
 
         List<LeagueMatch> matches = leagueMatchService.generateCalendar(leagueId);
+        return matches.stream().map(LeagueMatchDto::from).toList();
+    }
+
+    @GetMapping
+    public List<LeagueMatchDto> getCalendar(@PathVariable Long leagueId, @AuthenticationPrincipal Jwt jwt) {
+        Long currentUserId = jwt.getClaim("uid");
+        List<LeagueMatch> matches = leagueMatchService.getCalendar(leagueId, currentUserId);
         return matches.stream().map(LeagueMatchDto::from).toList();
     }
 }

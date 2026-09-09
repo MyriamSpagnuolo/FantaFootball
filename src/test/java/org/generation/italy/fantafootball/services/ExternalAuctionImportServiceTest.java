@@ -78,6 +78,23 @@ class ExternalAuctionImportServiceTest {
     }
 
     @Test
+    void REQUEST_NULL_SHOULD_THROW_BAD_REQUEST_EXCEPTION() {
+        BadRequestException e = assertThrows(
+                BadRequestException.class,
+                () -> service.importPlayer(
+                        leagueId,
+                        teamId,
+                        userId,
+                        playerId,
+                        null
+                )
+        );
+
+        assertEquals("invalid_purchase_price", e.getErrorCode());
+        verifyNoInteractions(teamRepo, teamPlayerRepo, leagueRepo, playerRepo);
+    }
+
+    @Test
     void LEAGUE_ID_NOT_VALID_SHOULD_THROW_CONFLICT_EXCEPTION() {
          NotFoundException e = assertThrows(
                  NotFoundException.class,

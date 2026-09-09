@@ -18,7 +18,7 @@ public class AuctionImportController {
         this.importService = service;
     }
 
-    @PostMapping("/player/{playerId}")
+    @PostMapping("/players/{playerId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void importPlayer(
             @PathVariable Long leagueId,

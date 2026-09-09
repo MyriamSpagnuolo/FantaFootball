@@ -5,7 +5,7 @@ import org.generation.italy.fantafootball.model.entities.LeagueInvite;
 import java.time.LocalDateTime;
 
 public record InviteResponse(
-        Long id, Long leagueId, Long invitedByUserId, Long invitedUserId,
+        Long id, Long leagueId, String leagueName, Long invitedByUserId, String username, Long invitedUserId,
         String status, LocalDateTime sentDate, LocalDateTime responseDate
 ) {
     /*
@@ -18,7 +18,9 @@ public record InviteResponse(
         return new InviteResponse(
                 invite.getId(),
                 invite.getLeague().getId(),
+                invite.getLeague().getName(),
                 invite.getInvitedBy().getId(),
+                invite.getInvitedBy().getUsername(),
                 invite.getInvitedUser().getId(),
                 invite.getStatus().name(),
                 invite.getSentDate(),

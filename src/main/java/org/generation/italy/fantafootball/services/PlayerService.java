@@ -2,6 +2,7 @@ package org.generation.italy.fantafootball.services;
 
 import org.generation.italy.fantafootball.model.dto.PlayerFilterRequest;
 import org.generation.italy.fantafootball.model.dto.PlayerResponse;
+import org.generation.italy.fantafootball.model.dto.PageResponse;
 import org.generation.italy.fantafootball.model.entities.Player;
 import org.generation.italy.fantafootball.model.exceptions.BadRequestException;
 import org.generation.italy.fantafootball.model.repositories.PlayerRepository;
@@ -10,7 +11,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 
 @Service
 public class PlayerService {
@@ -22,8 +22,9 @@ public class PlayerService {
     }
 
     @Transactional(readOnly = true)
-    public List<PlayerResponse> findPlayers(PlayerFilterRequest filters) {
+    public PageResponse<PlayerResponse> findPlayers(PlayerFilterRequest filters, int page, int size) {
         validateFilters(filters);
+        var pageable = PlayerPagination.of(page, size);
 
         Specification<Player> specification = Specification.allOf();
 
@@ -57,10 +58,8 @@ public class PlayerService {
             );
         }
 
-        return playerRepository.findAll(specification)
-                .stream()
-                .map(PlayerResponse::fromEntity)
-                .toList();
+        return PageResponse.fromPage(playerRepository.findAll(specification, pageable)
+                .map(PlayerResponse::fromEntity));
     }
 
     private void validateFilters(PlayerFilterRequest filters) {
