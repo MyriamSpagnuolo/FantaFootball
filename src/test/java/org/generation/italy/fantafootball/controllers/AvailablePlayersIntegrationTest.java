@@ -52,7 +52,7 @@ class AvailablePlayersIntegrationTest {
 
     @Test
     void emptyLeagueReturnsEntireCatalogWithPlayerResponseFields() throws Exception {
-        PlayerResponse expected = PlayerResponse.fromEntity(first);
+        PlayerResponse expected = PlayerResponse.fromEntity(second);
         mvc.perform(get(url()).with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
@@ -227,7 +227,7 @@ class AvailablePlayersIntegrationTest {
                             .with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content.length()").value(1))
-                    .andExpect(jsonPath("$.content[0].id").value(first.getId()))
+                    .andExpect(jsonPath("$.content[0].id").value(second.getId()))
                     .andExpect(jsonPath("$.page").value(0))
                     .andExpect(jsonPath("$.size").value(1))
                     .andExpect(jsonPath("$.totalElements").value(2))
@@ -237,10 +237,30 @@ class AvailablePlayersIntegrationTest {
                             .with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content.length()").value(1))
-                    .andExpect(jsonPath("$.content[0].id").value(second.getId()))
+                    .andExpect(jsonPath("$.content[0].id").value(first.getId()))
                     .andExpect(jsonPath("$.page").value(1))
                     .andExpect(jsonPath("$.totalElements").value(2))
                     .andExpect(jsonPath("$.hasNext").value(false));
+        }
+    }
+
+    @Test
+    void bothEndpointsOrderAllRolesAndNamesBeforePagination() throws Exception {
+        Player defender = players.save(new Player(103L, "Zeno", "Zeta", "Roma", 1, 10, false, PlayerRole.D));
+        Player keeperZ = players.save(new Player(104L, "Zeno", "Zeta", "Roma", 1, 10, false, PlayerRole.P));
+        Player keeperB = players.save(new Player(105L, "Bruno", "Alfa", "Roma", 1, 10, false, PlayerRole.P));
+        Player keeperA = players.save(new Player(106L, "Andrea", "Alfa", "Roma", 1, 10, false, PlayerRole.P));
+        Player keeperTwin = players.save(new Player(107L, "Andrea", "Alfa", "Roma", 1, 10, false, PlayerRole.P));
+        Player[] expected = {keeperA, keeperTwin, keeperB, keeperZ, defender, second, first};
+        for (String endpoint : new String[]{"/api/players", url()}) {
+            for (int page = 0; page < expected.length; page++) {
+                mvc.perform(get(endpoint).param("page", Integer.toString(page)).param("size", "1")
+                                .with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.content.length()").value(1))
+                        .andExpect(jsonPath("$.content[0].id").value(expected[page].getId()))
+                        .andExpect(jsonPath("$.totalElements").value(expected.length));
+            }
         }
     }
 
@@ -258,14 +278,14 @@ class AvailablePlayersIntegrationTest {
 
     @Test
     void catalogFiltersApplyBeforePaginationAndCounting() throws Exception {
-        players.save(new Player(103L, "Paolo", "Neri", "Roma", 10, 25, false, PlayerRole.A));
+        Player filteredFirst = players.save(new Player(103L, "Paolo", "Neri", "Roma", 10, 25, false, PlayerRole.A));
         mvc.perform(get("/api/players").param("role", "A").param("realTeamName", "Roma")
                         .param("minPrice", "20").param("maxPrice", "25").param("injured", "false")
                         .param("size", "1")
                         .with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1))
-                .andExpect(jsonPath("$.content[0].id").value(first.getId()))
+                .andExpect(jsonPath("$.content[0].id").value(filteredFirst.getId()))
                 .andExpect(jsonPath("$.totalElements").value(2))
                 .andExpect(jsonPath("$.totalPages").value(2));
     }

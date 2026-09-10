@@ -10,7 +10,9 @@ import org.generation.italy.fantafootball.model.specifications.PlayerSpecificati
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.Locale;
+
+import java.util.List;
+import org.generation.italy.fantafootball.model.dto.PriceRangeResponse;
 
 
 @Service
@@ -67,6 +69,15 @@ public class PlayerService {
                 .map(PlayerResponse::fromEntity));
     }
 
+    @Transactional(readOnly = true)
+    public List<String> findRealTeams() { return playerRepository.findDistinctRealTeamNames(); }
+
+    @Transactional(readOnly = true)
+    public PriceRangeResponse findPriceRange(PlayerFilterRequest filters) {
+        validateFiltersIgnoringPrice(filters);
+        return playerRepository.findPriceRange(filters);
+    }
+
     private void validateFilters(PlayerFilterRequest filters) {
         if (filters == null) {
             throw new BadRequestException(
@@ -104,5 +115,11 @@ public class PlayerService {
                     "La squadra reale deve essere valorizzata"
             );
         }
+    }
+
+    private void validateFiltersIgnoringPrice(PlayerFilterRequest filters) {
+        if (filters == null) throw new BadRequestException("INVALID_FILTERS", "I filtri non possono essere null");
+        if (filters.realTeamName() != null && filters.realTeamName().stream().anyMatch(s -> s != null && s.isBlank()))
+            throw new BadRequestException("INVALID_REAL_TEAM", "La squadra reale deve essere valorizzata");
     }
 }
