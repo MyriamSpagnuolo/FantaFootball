@@ -37,11 +37,16 @@
 --     residuo resta comunque una piccola frazione del budget totale.
 --   - Non tutti i 500 player reali vengono assegnati: solo 18 * 6 = 108,
 --     gli altri restano liberi (nessun vincolo di unicita' violato).
---   - 3 league_match di round 1 (coppie di squadre), agganciate alla
---     PRIMA matchday reale ancora aperta (is_closed = false) trovata in
---     DB al momento dell'esecuzione — non una matchday finta: cosi' la
---     formazione risulta modificabile subito (LineupService.
---     ensureMatchdayOpen) senza dover inserire dati fittizzi anche li'.
+--   - NESSUN league_match: a differenza di una vecchia versione di questo
+--     script, NON inseriamo piu' a mano 3 partite fittizie di round 1.
+--     Farlo bypassava del tutto LeagueMatchService.generateCalendar(),
+--     che invece genera round-robin (RoundRobinScheduler) un numero di
+--     round pari a matchdayRepository.findByClosedFalseOrderByDateAsc()
+--     — cioe' dipendente da QUANTE giornate reali ancora aperte risultano
+--     sincronizzate da LeagueSim in quel momento. Il calendario va quindi
+--     generato con la vera API (POST /api/leagues/{leagueId}/matches,
+--     solo admin di lega — vedi step 4 della procedura sotto), cosi' il
+--     test copre anche quella logica invece di scavalcarla.
 --   - NESSUNA lineup/lineup_player: e' esattamente cio' che l'utente
 --     deve testare a mano (frontend o Swagger) dopo aver lanciato lo
 --     script.
@@ -54,7 +59,23 @@
 -- azzerata per prima: e' questo che permette di rilanciare lo script e
 -- ripetere il test di creazione formazione via API senza incappare nel
 -- 409 lineup_already_exists di LineupService.createLineup. Non tocca
--- mai app_users diversi da questi 6, ne' player/matchday/lineup_type.
+-- mai app_users diversi da questi 6, ne' player/lineup_type.
+--
+-- matchday / player_results: a differenza delle altre tabelle sono
+-- condivise da TUTTA fantafootball (non scoped a 'LINEUPQA1'). Lo script
+-- cancella TUTTI i player_results, poi le matchday non piu' referenziate
+-- da nessun league_match (di QUALSIASI lega, non solo la nostra —
+-- fk_lm_matchday in ddl.sql e' NO ACTION, quindi una matchday ancora
+-- usata da un'altra lega non verrebbe cancellata: la DELETE fallirebbe e
+-- farebbe rollback dell'intero script, non corrompe nulla). Reset totale
+-- voluto, non solo delle giornate "orfane": serve quando anche LeagueSim
+-- (l'altro servizio) viene fatto ripartire dalla prima giornata, per
+-- evitare che i vecchi player_results/matchday locali restino sfalzati
+-- rispetto ai NUOVI dati che LeagueSim restituira' per quegli stessi
+-- number di giornata. Al giro successivo di
+-- LeagueSimSyncService.syncMatchdays() (schedulato, non lanciato da
+-- questo script) matchday/player_results vengono reimportati ex novo
+-- dallo stato corrente di LeagueSim.
 --
 -- Password in chiaro per TUTTI gli utenti di test: Fantacalcio1!
 -- (rispetta i vincoli di StrongPasswordValidator: >=12 caratteri,
@@ -68,13 +89,27 @@
 --   3) GET /api/teams/{teamId}/players per la rosa (18 player, con
 --      teamPlayerId, position, price) e GET /api/lineup-types per gli
 --      id dei moduli disponibili;
---   4) trova il leagueMatchId di round 1 per quella squadra (query sotto
---      o GET /api/leagues/{leagueId}/teams + i league_match della lega);
---   5) POST /api/teams/{teamId}/matches/{leagueMatchId}/lineup con un
+--   4) POST /api/leagues/{leagueId}/matches (leagueId della lega
+--      'LINEUPQA1', solo con il JWT di lineup.test1 che e' l'admin di
+--      lega) per generare il calendario vero tramite
+--      LeagueMatchService.generateCalendar() — genera tanti round quante
+--      sono le matchday reali ancora aperte in quel momento, con gli
+--      accoppiamenti round-robin. Se non c'e' nessuna matchday aperta in
+--      DB (sincronizzata da LeagueSim), fallisce con 400 invalid_rounds:
+--      serve almeno una giornata reale aperta prima di lanciare lo step.
+--      Lo script stesso ha appena azzerato matchday/player_results (vedi
+--      sopra): il DB resta senza matchday finche' non arriva il prossimo
+--      giro schedulato di LeagueSimSyncService.syncMatchdays()
+--      (intervallo leaguesim.results-sync-interval) — aspettalo prima di
+--      chiamare questo step.
+--   5) trova il leagueMatchId di round 1 per la propria squadra nella
+--      risposta dello step 4 (o GET /api/leagues/{leagueId}/matches);
+--   6) POST /api/teams/{teamId}/matches/{leagueMatchId}/lineup con un
 --      LineupRequest {lineupTypeId, defensive, players:[{teamPlayerId,
 --      starter}, ...]} — 1 portiere + D/C/A del modulo scelto tra gli
 --      starter=true, il resto (se presente) starter=false in panchina.
---   6) rilancia lo script per azzerare la formazione e ripetere il test.
+--   7) rilancia lo script per azzerare formazione e calendario e
+--      ripetere il test dallo step 4.
 -- =====================================================================
 
 BEGIN;
@@ -98,6 +133,22 @@ WHERE league_id = (SELECT id FROM league WHERE invite_code = 'LINEUPQA1');
 
 DELETE FROM league
 WHERE invite_code = 'LINEUPQA1';
+
+-- Vedi commento in testa al file: reset totale (globale, non scoped alla
+-- lega di test) di player_results e matchday, per riallinearsi a
+-- LeagueSim quando anche li' la stagione viene fatta ripartire dalla
+-- prima giornata. player_results va cancellato PRIMA di matchday (FK
+-- fk_player_results_matchday NO ACTION la blocca finche' ci sono righe
+-- agganciate).
+DELETE FROM player_results;
+
+-- Le matchday restano cancellabili solo se nessun'altra lega le
+-- referenzia ancora via league_match (fk_lm_matchday e' NO ACTION): se
+-- nel DB c'e' un'altra lega con calendario gia' generato su queste
+-- giornate, questa DELETE fallisce e fa rollback dell'intero script
+-- invece di corrompere silenziosamente quell'altra lega.
+DELETE FROM matchday m
+WHERE NOT EXISTS (SELECT 1 FROM league_match lm WHERE lm.matchday_id = m.id);
 
 DELETE FROM app_users
 WHERE username IN ('lineup.test1', 'lineup.test2', 'lineup.test3', 'lineup.test4', 'lineup.test5', 'lineup.test6');
@@ -205,32 +256,11 @@ SET budget = (SELECT budget FROM league WHERE id = t.league_id)
 WHERE t.league_id = (SELECT id FROM league WHERE invite_code = 'LINEUPQA1');
 
 -- ---------------------------------------------------------------------
--- league_match: round 1, 3 partite (Alfa-Beta, Gamma-Delta,
--- Epsilon-Zeta), agganciate alla prima matchday reale ancora aperta
--- trovata in DB (non una matchday finta: cosi' la formazione e' subito
--- modificabile, vedi LineupService.ensureMatchdayOpen).
+-- Nessun league_match qui: va generato con la vera API (POST
+-- /api/leagues/{leagueId}/matches, come admin di lega lineup.test1) in
+-- modo che LeagueMatchService.generateCalendar() giri per davvero sulle
+-- matchday reali ancora aperte al momento — vedi step 4 della procedura
+-- di test qui sopra.
 -- ---------------------------------------------------------------------
-INSERT INTO league_match (league_id, home_team_id, away_team_id, home_score, away_score, home_goals, away_goals, match_day, matchday_id, round_number) VALUES
-((SELECT id FROM league WHERE invite_code = 'LINEUPQA1'),
- (SELECT id FROM team WHERE name = 'Squadra Alfa' AND league_id = (SELECT id FROM league WHERE invite_code = 'LINEUPQA1')),
- (SELECT id FROM team WHERE name = 'Squadra Beta' AND league_id = (SELECT id FROM league WHERE invite_code = 'LINEUPQA1')),
- NULL, NULL, NULL, NULL,
- (SELECT date::timestamp + TIME '15:00:00' FROM matchday WHERE is_closed = false ORDER BY number ASC LIMIT 1),
- (SELECT id FROM matchday WHERE is_closed = false ORDER BY number ASC LIMIT 1),
- 1),
-((SELECT id FROM league WHERE invite_code = 'LINEUPQA1'),
- (SELECT id FROM team WHERE name = 'Squadra Gamma' AND league_id = (SELECT id FROM league WHERE invite_code = 'LINEUPQA1')),
- (SELECT id FROM team WHERE name = 'Squadra Delta' AND league_id = (SELECT id FROM league WHERE invite_code = 'LINEUPQA1')),
- NULL, NULL, NULL, NULL,
- (SELECT date::timestamp + TIME '15:00:00' FROM matchday WHERE is_closed = false ORDER BY number ASC LIMIT 1),
- (SELECT id FROM matchday WHERE is_closed = false ORDER BY number ASC LIMIT 1),
- 1),
-((SELECT id FROM league WHERE invite_code = 'LINEUPQA1'),
- (SELECT id FROM team WHERE name = 'Squadra Epsilon' AND league_id = (SELECT id FROM league WHERE invite_code = 'LINEUPQA1')),
- (SELECT id FROM team WHERE name = 'Squadra Zeta' AND league_id = (SELECT id FROM league WHERE invite_code = 'LINEUPQA1')),
- NULL, NULL, NULL, NULL,
- (SELECT date::timestamp + TIME '15:00:00' FROM matchday WHERE is_closed = false ORDER BY number ASC LIMIT 1),
- (SELECT id FROM matchday WHERE is_closed = false ORDER BY number ASC LIMIT 1),
- 1);
 
 COMMIT;
