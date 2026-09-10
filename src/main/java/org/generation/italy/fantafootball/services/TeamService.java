@@ -141,17 +141,13 @@ public class TeamService {
     }
 
     @Transactional(readOnly = true)
-    public List<TeamPlayerResponse> getTeamRoster(Long teamId, Long userId) {
-        Team team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new NotFoundException("TEAM_NOT_FOUND", "Squadra non trovata: " + teamId));
-
-        boolean isOwner = team.getUser().getId().equals(userId);
-        boolean isLeagueAdmin = team.getLeague().getAdmin().getId().equals(userId);
-        if (!isOwner && !isLeagueAdmin) {
-            throw new ConflictException("NOT_AUTHORIZED_FOR_TEAM",
-                    "Solo il proprietario della squadra o l'admin della lega possono vedere questa rosa");
+    public List<TeamPlayerResponse> getTeamRoster(Long teamId) {
+        if (!teamRepository.existsById(teamId)) {
+            throw new NotFoundException(
+                    "TEAM_NOT_FOUND",
+                    "Squadra non trovata:" + teamId
+            );
         }
-
         return teamPlayerRepository.findAllByTeamId(teamId).stream()
                 .map(TeamPlayerResponse::fromEntity)
                 .toList();
