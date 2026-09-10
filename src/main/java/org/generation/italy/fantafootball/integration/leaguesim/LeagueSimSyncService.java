@@ -1,5 +1,6 @@
 package org.generation.italy.fantafootball.integration.leaguesim;
 
+import org.generation.italy.fantafootball.calculateMatchday.LeagueMatchScoreService;
 import org.generation.italy.fantafootball.integration.leaguesim.dto.LeagueSimMatchdayDto;
 import org.generation.italy.fantafootball.integration.leaguesim.dto.LeagueSimPlayerDto;
 import org.generation.italy.fantafootball.integration.leaguesim.dto.LeagueSimPlayerResultDto;
@@ -30,15 +31,18 @@ public class LeagueSimSyncService {
     private final PlayerRepository playerRepository;
     private final MatchdayRepository matchdayRepository;
     private final LeagueSimMatchdayImportService matchdayImportService;
+    private final LeagueMatchScoreService leagueMatchScoreService;
 
     public LeagueSimSyncService(LeagueSimClient client,
                                  PlayerRepository playerRepository,
                                  MatchdayRepository matchdayRepository,
-                                 LeagueSimMatchdayImportService matchdayImportService) {
+                                 LeagueSimMatchdayImportService matchdayImportService,
+                                 LeagueMatchScoreService leagueMatchScoreService) {
         this.client = client;
         this.playerRepository = playerRepository;
         this.matchdayRepository = matchdayRepository;
         this.matchdayImportService = matchdayImportService;
+        this.leagueMatchScoreService = leagueMatchScoreService;
     }
 
     // Allinea il catalogo giocatori locale con quello di LeagueSim: crea i Player mancanti e
@@ -90,13 +94,23 @@ public class LeagueSimSyncService {
     // usa per generare il calendario (i league_match fittizi) di una lega prima ancora che quella
     // giornata sia stata disputata. Per le giornate che LeagueSim segna come chiuse (closed = true)
     // e non ancora importate in locale, importa anche i risultati. Usiamo il flag "closed" del
-    // NOSTRO Matchday come marcatore "risultati gia' importati": se e' gia' true, lo saltiamo
-    // (idempotenza — rilanciare questo metodo piu' volte non duplica ne' rifa' lavoro inutile).
+    // NOSTRO Matchday come marcatore "risultati gia' importati": se e' gia' true, saltiamo il
+    // re-import (idempotenza — rilanciare questo metodo piu' volte non duplica ne' rifa' lavoro
+    // inutile sui PlayerResult).
     // Ogni giornata e' isolata in un try/catch sull'upsert dell'anagrafica, come gia' fatto per i
     // giocatori in syncPlayers: senza questo isolamento, un errore sul salvataggio di UNA giornata
     // interrompeva il for e tutte le giornate successive della lista non venivano nemmeno salvate
     // (bug osservato: il calendario locale restava fermo a una sola giornata anche con piu' giornate
     // aperte su LeagueSim).
+    // Per OGNI giornata gia' chiusa in locale (appena importata in questo giro, o chiusa in un giro
+    // precedente) tenta anche il calcolo dei punteggi dei league_match tramite LeagueMatchScoreService
+    // — a differenza dell'import dei risultati, QUESTO passo non va saltato con isAlreadyImported:
+    // LeagueMatchScoreService.calculateAndSaveResultsForMatchday e' idempotente di suo (agisce solo
+    // sui league_match ancora senza risultato), quindi richiamarla ad ogni giro e' economico e serve
+    // a coprire il caso reale in cui un league_match/lineup viene creato DOPO che la giornata era
+    // gia' stata chiusa (es. calendario generato o formazione schierata in un secondo momento, o
+    // dopo un riavvio dell'app): senza questo, quel punteggio non verrebbe MAI calcolato, perche' il
+    // "chiudersi" della giornata e' un evento che capita una volta sola.
     public void syncMatchdays() {
         List<LeagueSimMatchdayDto> remoteMatchdays;
         try {
@@ -118,20 +132,35 @@ public class LeagueSimSyncService {
             if (!matchdayDto.closed()) {
                 continue; // giornata non ancora giocata: non ci sono risultati da prendere
             }
-            if (isAlreadyImported(matchdayDto.number())) {
-                continue;
+
+            if (!isAlreadyImported(matchdayDto.number())) {
+                try {
+                    List<LeagueSimPlayerResultDto> results = client.fetchResults(matchdayDto.number());
+                    matchdayImportService.importResults(matchdayDto, results);
+                } catch (Exception e) {
+                    // Un errore su una giornata (es. LeagueSim momentaneamente irraggiungibile) non
+                    // deve interrompere il tentativo di importare le altre giornate del ciclo.
+                    LOGGER.error("Impossibile importare i risultati della giornata {}: {}",
+                            matchdayDto.number(), e.getMessage(), e);
+                    continue; // senza risultati importati non ha senso tentare il calcolo dei punteggi
+                }
             }
 
-            try {
-                List<LeagueSimPlayerResultDto> results = client.fetchResults(matchdayDto.number());
-                matchdayImportService.importResults(matchdayDto, results);
-            } catch (Exception e) {
-                // Un errore su una giornata (es. LeagueSim momentaneamente irraggiungibile) non deve
-                // interrompere il tentativo di importare le altre giornate del ciclo.
-                LOGGER.error("Impossibile importare i risultati della giornata {}: {}",
-                        matchdayDto.number(), e.getMessage(), e);
-            }
+            calculateLeagueMatchScoresIfClosed(matchdayDto.number());
         }
+    }
+
+    private void calculateLeagueMatchScoresIfClosed(int matchdayNumber) {
+        matchdayRepository.findByNumber(matchdayNumber)
+                .filter(Matchday::isClosed)
+                .ifPresent(matchday -> {
+                    try {
+                        leagueMatchScoreService.calculateAndSaveResultsForMatchday(matchday.getId());
+                    } catch (Exception e) {
+                        LOGGER.error("Impossibile calcolare i punteggi dei league_match per la giornata {}: {}",
+                                matchdayNumber, e.getMessage(), e);
+                    }
+                });
     }
 
     // Crea o aggiorna solo l'anagrafica della giornata (number/date). Non tocca mai "closed" qui:
