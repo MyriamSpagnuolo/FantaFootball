@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -96,6 +97,73 @@ class LeagueInviteServiceTest {
         );
 
         assertEquals("NOT_YOUR_INVITE", exception.getErrorCode());
+    }
+
+    @Test
+    void getSentInvitesReturnsInvitesCreatedByUser() {
+        AppUser admin = user(1L, "admin");
+        AppUser invited = user(2L, "guest");
+        LeagueInvite invite = new LeagueInvite(league(9L, admin), admin, invited,
+                LeagueInviteStatus.PENDING);
+
+        when(leagueInviteRepository.findAllByInvitedByIdOrderBySentDateDesc(1L))
+                .thenReturn(List.of(invite));
+
+        var response = leagueInviteService.getSentInvitesForUser(1L);
+
+        assertEquals(1, response.size());
+        assertEquals("admin", response.getFirst().username());
+        assertEquals("guest", response.getFirst().invitedUsername());
+        verify(leagueInviteRepository).findAllByInvitedByIdOrderBySentDateDesc(1L);
+    }
+
+    @Test
+    void cancelInviteAllowsOnlyTheSenderAndDeletesInvite() {
+        AppUser sender = user(1L, "admin");
+        AppUser recipient = user(2L, "guest");
+        LeagueInvite invite = new LeagueInvite(league(9L, sender), sender, recipient,
+                LeagueInviteStatus.PENDING);
+
+        when(leagueInviteRepository.findById(30L)).thenReturn(Optional.of(invite));
+        leagueInviteService.cancelInvite(30L, 1L);
+
+        verify(leagueInviteRepository).delete(invite);
+    }
+
+    @Test
+    void cancelInviteRejectsTheRecipient() {
+        AppUser sender = user(1L, "admin");
+        AppUser recipient = user(2L, "guest");
+        LeagueInvite invite = new LeagueInvite(league(9L, sender), sender, recipient,
+                LeagueInviteStatus.PENDING);
+
+        when(leagueInviteRepository.findById(30L)).thenReturn(Optional.of(invite));
+
+        ConflictException exception = assertThrows(
+                ConflictException.class,
+                () -> leagueInviteService.cancelInvite(30L, 2L)
+        );
+
+        assertEquals("NOT_YOUR_INVITE", exception.getErrorCode());
+        verify(leagueInviteRepository, org.mockito.Mockito.never()).delete(any(LeagueInvite.class));
+    }
+
+    @Test
+    void cancelInviteRejectsAlreadyRespondedInvite() {
+        AppUser sender = user(1L, "admin");
+        AppUser recipient = user(2L, "guest");
+        LeagueInvite invite = new LeagueInvite(league(9L, sender), sender, recipient,
+                LeagueInviteStatus.ACCEPTED);
+
+        when(leagueInviteRepository.findById(30L)).thenReturn(Optional.of(invite));
+
+        ConflictException exception = assertThrows(
+                ConflictException.class,
+                () -> leagueInviteService.cancelInvite(30L, 1L)
+        );
+
+        assertEquals("INVITE_ALREADY_RESPONDED", exception.getErrorCode());
+        verify(leagueInviteRepository, org.mockito.Mockito.never()).delete(any(LeagueInvite.class));
     }
 
     private static AppUser user(Long id, String username) {

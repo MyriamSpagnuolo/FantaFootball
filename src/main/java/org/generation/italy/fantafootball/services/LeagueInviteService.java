@@ -114,9 +114,31 @@ public class LeagueInviteService {
         return InviteResponse.fromEntity(leagueInviteRepository.save(invite));
     }
 
+    @Transactional
+    public void cancelInvite(Long inviteId, Long cancellingUserId) {
+        LeagueInvite invite = leagueInviteRepository.findById(inviteId)
+                .orElseThrow(() -> new NotFoundException("INVITE_NOT_FOUND", "Invito non trovato: " + inviteId));
+
+        if (!invite.getInvitedBy().getId().equals(cancellingUserId)) {
+            throw new ConflictException("NOT_YOUR_INVITE", "Solo il mittente può annullare questo invito");
+        }
+        if (invite.getStatus() != LeagueInviteStatus.PENDING) {
+            throw new ConflictException("INVITE_ALREADY_RESPONDED", "L'invito non è più in sospeso");
+        }
+
+        leagueInviteRepository.delete(invite);
+    }
+
     @Transactional(readOnly = true)
     public List<InviteResponse> getPendingInvitesForUser(Long userId) {
         return leagueInviteRepository.findAllByInvitedUserIdAndStatus(userId, LeagueInviteStatus.PENDING).stream()
+                .map(InviteResponse::fromEntity)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<InviteResponse> getSentInvitesForUser(Long userId) {
+        return leagueInviteRepository.findAllByInvitedByIdOrderBySentDateDesc(userId).stream()
                 .map(InviteResponse::fromEntity)
                 .toList();
     }

@@ -74,10 +74,11 @@ Tutte le eccezioni di business rispondono con body `{"errorCode": "...", "messag
 | Metodo | Path | Request | Response | Note |
 |---|---|---|---|---|
 | POST | `/api/leagues/{leagueId}/invites` | `CreateInviteRequest{invitedUsername}` | `InviteResponse` → 201 | Solo admin di lega (409 `NOT_LEAGUE_ADMIN` altrimenti); 409 se invito pending duplicato o utente già in lega |
-| GET | `/api/invites/pending` | — | `List<InviteResponse>` | Inviti pending per l'utente corrente |
-| PATCH | `/api/invites/{inviteId}` | `UpdateInviteStatusRequest{status: ACCEPTED\|DECLINED}` | `InviteResponse` | Solo il destinatario; 409 se non pending; **accettare l'invito NON crea la Team** — dopo serve una `POST /api/teams` separata |
+| GET | `/api/invites/pending` o `/api/invites/received` | — | `List<InviteResponse>` | Inviti pending per l'utente corrente |
+| GET | `/api/invites/sent` | — | `List<InviteResponse>` | Inviti inviati dall'utente corrente, ordinati dal più recente |
+| PATCH | `/api/invites/{inviteId}` | `UpdateInviteStatusRequest{status: ACCEPTED\|DECLINED\|CANCELLED}` | `InviteResponse` per `ACCEPTED`/`DECLINED`, 204 per `CANCELLED` | `ACCEPTED`/`DECLINED`: solo il destinatario; `CANCELLED`: solo il mittente e rimuove definitivamente l'invito, sempre solo se pending. **Accettare l'invito NON crea la Team** — dopo serve una `POST /api/teams` separata |
 
-`InviteResponse`: `{id, leagueId, invitedByUserId, invitedUserId, status, sentDate, responseDate}`. `LeagueInviteStatus`: `PENDING | ACCEPTED | DECLINED | EXPIRED` (`EXPIRED` esiste nell'enum ma non risulta mai impostato da nessun service).
+`InviteResponse`: `{id, leagueId, leagueName, invitedByUserId, username, invitedUserId, invitedUsername, status, sentDate, responseDate}`. `username` è sempre lo username del mittente (`invitedBy`), mentre `invitedUsername` è sempre quello del destinatario (`invitedUser`). `LeagueInviteStatus`: `PENDING | ACCEPTED | DECLINED | EXPIRED | CANCELLED`; `CANCELLED` è usato solo come comando di annullamento e l'invito viene eliminato, quindi non viene persistito.
 
 ### Teams — `/api/teams`
 
