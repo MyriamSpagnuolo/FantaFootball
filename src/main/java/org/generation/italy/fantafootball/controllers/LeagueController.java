@@ -64,8 +64,9 @@ public class LeagueController {
     @GetMapping("/leagues/{leagueId}/players/available")
     public PageResponse<PlayerResponse> getAvailablePlayers(@PathVariable Long leagueId, @AuthenticationPrincipal Jwt jwt,
                                                           @RequestParam(defaultValue = "0") int page,
-                                                          @RequestParam(defaultValue = "20") int size) {
-        return leagueService.getAvailablePlayers(leagueId, extractUserId(jwt), page, size);
+                                                          @RequestParam(defaultValue = "20") int size,
+                                                          @RequestParam(defaultValue = "") String search) {
+        return leagueService.getAvailablePlayers(leagueId, extractUserId(jwt), page, size, search);
     }
 
     @GetMapping("/leagues/{leagueId}")

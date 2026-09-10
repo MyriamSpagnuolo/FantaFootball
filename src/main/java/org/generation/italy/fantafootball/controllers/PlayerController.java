@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.generation.italy.fantafootball.model.dto.PriceRangeResponse;
+import java.util.List;
 
 
 @RestController
@@ -32,6 +34,14 @@ public class PlayerController {
             @RequestParam(defaultValue = "20") int size) {
 
         return playerService.findPlayers(filters, page, size);
+    }
+
+    @GetMapping("/real-teams")
+    public List<String> getRealTeams() { return playerService.findRealTeams(); }
+
+    @GetMapping("/price-range")
+    public PriceRangeResponse getPriceRange(@ModelAttribute PlayerFilterRequest filters) {
+        return playerService.findPriceRange(filters);
     }
 
     @GetMapping("/{playerId}/matchdays/{matchdayId}/rating")

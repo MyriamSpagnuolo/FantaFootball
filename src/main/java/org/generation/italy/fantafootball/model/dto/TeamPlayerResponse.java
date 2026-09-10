@@ -7,14 +7,15 @@ import java.time.LocalDate;
 
 public record TeamPlayerResponse(
         Long id, Long teamId, Long playerId,
-        String name, String surname, String realTeamName, int realTeamShirtNum,
+        String name, String surname, String realTeamName, String playerRole, int realTeamShirtNum,
         boolean injured, LocalDate purchaseDate, LocalDate transferDate, int purchasePrice
 ) {
     public static TeamPlayerResponse fromEntity(TeamPlayer teamPlayer) {
         Player player = teamPlayer.getPlayer();
         return new TeamPlayerResponse(
                 teamPlayer.getId(), teamPlayer.getTeam().getId(), player.getId(),
-                player.getName(), player.getSurname(), player.getRealTeamName(), player.getRealTeamShirtNum(),
+
+                player.getName(), player.getSurname(), player.getRealTeamName(), player.getRole().name(), player.getRealTeamShirtNum(),
                 player.isInjured(), teamPlayer.getPurchaseDate(), teamPlayer.getTransferDate(), teamPlayer.getPurchasePrice()
         );
     }
