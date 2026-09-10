@@ -92,6 +92,11 @@ public class LeagueSimSyncService {
     // e non ancora importate in locale, importa anche i risultati. Usiamo il flag "closed" del
     // NOSTRO Matchday come marcatore "risultati gia' importati": se e' gia' true, lo saltiamo
     // (idempotenza — rilanciare questo metodo piu' volte non duplica ne' rifa' lavoro inutile).
+    // Ogni giornata e' isolata in un try/catch sull'upsert dell'anagrafica, come gia' fatto per i
+    // giocatori in syncPlayers: senza questo isolamento, un errore sul salvataggio di UNA giornata
+    // interrompeva il for e tutte le giornate successive della lista non venivano nemmeno salvate
+    // (bug osservato: il calendario locale restava fermo a una sola giornata anche con piu' giornate
+    // aperte su LeagueSim).
     public void syncMatchdays() {
         List<LeagueSimMatchdayDto> remoteMatchdays;
         try {
@@ -102,7 +107,13 @@ public class LeagueSimSyncService {
         }
 
         for (LeagueSimMatchdayDto matchdayDto : remoteMatchdays) {
-            upsertMatchdayShell(matchdayDto);
+            try {
+                upsertMatchdayShell(matchdayDto);
+            } catch (Exception e) {
+                LOGGER.error("Impossibile sincronizzare l'anagrafica della giornata {}: {}",
+                        matchdayDto.number(), e.getMessage(), e);
+                continue; // giornata non salvata: non ha senso tentare di importarne i risultati
+            }
 
             if (!matchdayDto.closed()) {
                 continue; // giornata non ancora giocata: non ci sono risultati da prendere
