@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.Locale;
 
 @Service
 public class LeagueService {
@@ -35,7 +36,8 @@ public class LeagueService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<PlayerResponse> getAvailablePlayers(Long leagueId, Long requestingUserId, int page, int size) {
+    public PageResponse<PlayerResponse> getAvailablePlayers(Long leagueId, Long requestingUserId, int page, int size,
+                                                          String search) {
         League league = leagueRepository.findById(leagueId)
                 .orElseThrow(() -> new NotFoundException("LEAGUE_NOT_FOUND", "Lega non trovata: " + leagueId));
 
@@ -45,7 +47,11 @@ public class LeagueService {
         }
 
         var pageable = PlayerPagination.of(page, size);
-        return PageResponse.fromPage(playerRepository.findAvailableByLeagueId(leagueId, pageable)
+        String normalizedSearch = search == null ? "" : search.strip().toLowerCase(Locale.ROOT);
+        // Escape the escape character first, then LIKE wildcards, so input stays literal.
+        String searchPattern = normalizedSearch.isEmpty() ? null : "%" + normalizedSearch
+                .replace("!", "!!").replace("%", "!%").replace("_", "!_") + "%";
+        return PageResponse.fromPage(playerRepository.findAvailableByLeagueId(leagueId, searchPattern, pageable)
                 .map(PlayerResponse::fromEntity));
     }
 

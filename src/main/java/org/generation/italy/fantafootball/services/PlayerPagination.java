@@ -2,7 +2,6 @@ package org.generation.italy.fantafootball.services;
 
 import org.generation.italy.fantafootball.model.exceptions.BadRequestException;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 
 final class PlayerPagination {
     private PlayerPagination() {
@@ -18,7 +17,7 @@ final class PlayerPagination {
         if ((long) page * size > Integer.MAX_VALUE) {
             throw new BadRequestException("INVALID_PAGE", "La pagina richiesta supera il limite supportato");
         }
-        // Un ordinamento univoco evita pagine ambigue a parita' di dati.
-        return PageRequest.of(page, size, Sort.by("id").ascending());
+        // Le query definiscono l'ordine per ruolo, cognome, nome e ID prima della paginazione.
+        return PageRequest.of(page, size);
     }
 }
