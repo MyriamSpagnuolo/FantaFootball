@@ -51,8 +51,8 @@ public class TeamController {
     }
 
     @GetMapping("/{teamId}/players")
-    public List<TeamPlayerResponse> getTeamRoster(@PathVariable Long teamId, @AuthenticationPrincipal Jwt jwt) {
-        return teamService.getTeamRoster(teamId, extractUserId(jwt));
+    public List<TeamPlayerResponse> getTeamRoster(@PathVariable Long teamId) {
+        return teamService.getTeamRoster(teamId);
     }
 
     @DeleteMapping("/{teamId}/players/{playerId}")

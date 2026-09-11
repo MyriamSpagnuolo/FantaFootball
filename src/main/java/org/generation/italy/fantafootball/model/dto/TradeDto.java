@@ -21,11 +21,13 @@ public record TradeDto(
         return new TradeDto(
                 trade.getId(),
                 trade.getProposingTeam().getId(),
-                trade.getProposingTeam().getName(),
+                trade.getProposingTeam().getName() ,
                 trade.getReceivingTeam().getId(),
                 trade.getReceivingTeam().getName(),
-                trade.getRequestedPlayer().getPlayer().getName(),
-                trade.getOfferedPlayer().getPlayer().getName(),
+                trade.getRequestedPlayer().getPlayer().getName() + " "
+                                            + trade.getRequestedPlayer().getPlayer().getSurname(),
+                trade.getOfferedPlayer().getPlayer().getName() + " "
+                                            + trade.getOfferedPlayer().getPlayer().getSurname(),
                 trade.getAmount(),
                 trade.getStatus(),
                 trade.getProposalDate()
