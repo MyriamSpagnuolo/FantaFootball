@@ -9,6 +9,7 @@ import java.util.Optional;
 
 public interface LeagueInviteRepository extends JpaRepository<LeagueInvite, Long> {
     List<LeagueInvite> findAllByInvitedUserIdAndStatus(Long invitedUserId, LeagueInviteStatus status);
+    List<LeagueInvite> findAllByInvitedByIdOrderBySentDateDesc(Long invitedById);
     boolean existsByLeagueIdAndInvitedUserIdAndStatus(Long leagueId, Long invitedUserId, LeagueInviteStatus status);
     Optional<LeagueInvite> findTopByLeagueIdAndInvitedUserIdOrderBySentDateDesc(Long leagueId, Long invitedUserId);
 }

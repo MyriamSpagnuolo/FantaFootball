@@ -6,6 +6,7 @@ import org.generation.italy.fantafootball.model.dto.UpdateInviteStatusRequest;
 import org.generation.italy.fantafootball.model.entities.LeagueInviteStatus;
 import org.generation.italy.fantafootball.model.exceptions.BadRequestException;
 import org.generation.italy.fantafootball.services.LeagueInviteService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -23,23 +24,32 @@ public class InviteResponseController {
     }
 
     @PatchMapping("/{inviteId}")
-    public InviteResponse updateInviteStatus(@PathVariable Long inviteId,
-                                             @Valid @RequestBody UpdateInviteStatusRequest request,
-                                             @AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<InviteResponse> updateInviteStatus(@PathVariable Long inviteId,
+                                                             @Valid @RequestBody UpdateInviteStatusRequest request,
+                                                             @AuthenticationPrincipal Jwt jwt) {
         Long userId = extractUserId(jwt);
         if (request.status() == LeagueInviteStatus.ACCEPTED) {
-            return leagueInviteService.acceptInvite(inviteId, userId);
+            return ResponseEntity.ok(leagueInviteService.acceptInvite(inviteId, userId));
         }
         if (request.status() == LeagueInviteStatus.DECLINED) {
-            return leagueInviteService.declineInvite(inviteId, userId);
+            return ResponseEntity.ok(leagueInviteService.declineInvite(inviteId, userId));
+        }
+        if (request.status() == LeagueInviteStatus.CANCELLED) {
+            leagueInviteService.cancelInvite(inviteId, userId);
+            return ResponseEntity.noContent().build();
         }
         throw new BadRequestException("INVALID_INVITE_STATUS",
-                "Solo ACCEPTED o DECLINED sono supportati per gli inviti");
+                "Solo ACCEPTED, DECLINED o CANCELLED sono supportati per gli inviti");
     }
 
-    @GetMapping("/pending")
+    @GetMapping({"/pending", "/received"})
     public List<InviteResponse> getPendingInvites(@AuthenticationPrincipal Jwt jwt) {
         return leagueInviteService.getPendingInvitesForUser(extractUserId(jwt));
+    }
+
+    @GetMapping("/sent")
+    public List<InviteResponse> getSentInvites(@AuthenticationPrincipal Jwt jwt) {
+        return leagueInviteService.getSentInvitesForUser(extractUserId(jwt));
     }
 
     private Long extractUserId(Jwt jwt) {
