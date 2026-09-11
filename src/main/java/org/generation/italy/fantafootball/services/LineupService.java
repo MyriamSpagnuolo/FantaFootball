@@ -69,7 +69,9 @@ public class LineupService {
         LineupType lineupType = loadLineupType(request.lineupTypeId());
         Map<Long, TeamPlayer> teamPlayersById = validateAndLoadPlayers(team, lineupType, request.players());
 
-        Lineup lineup = new Lineup(team, leagueMatch, lineupType, request.defensive());
+        boolean defensive = request.defensive()
+                || hasAtLeastFourStartingDefenders(request.players(), teamPlayersById);
+        Lineup lineup = new Lineup(team, leagueMatch, lineupType, defensive);
         Lineup savedLineup = lineupRepository.save(lineup);
 
         List<LineupPlayerResponse> playersResponse = savePlayers(savedLineup, request.players(), teamPlayersById);
@@ -110,7 +112,8 @@ public class LineupService {
         Map<Long, TeamPlayer> teamPlayersById = validateAndLoadPlayers(team, lineupType, request.players());
 
         lineup.setLineupType(lineupType);
-        lineup.setDefensive(request.defensive());
+        lineup.setDefensive(request.defensive()
+                || hasAtLeastFourStartingDefenders(request.players(), teamPlayersById));
         lineupRepository.save(lineup);
 
         lineupPlayerRepository.deleteAllByLineup_Id(lineup.getId());
@@ -198,6 +201,17 @@ public class LineupService {
                             + lineupType.getMidfielderNum() + " centrocampisti, "
                             + lineupType.getForwardNum() + " attaccanti)");
         }
+    }
+
+    private boolean hasAtLeastFourStartingDefenders(
+            List<LineupPlayerRequest> players,
+            Map<Long, TeamPlayer> teamPlayersById) {
+        long defenders = players.stream()
+                .filter(LineupPlayerRequest::starter)
+                .filter(player -> teamPlayersById.get(player.teamPlayerId()).getPlayer().getRole() == PlayerRole.D)
+                .count();
+
+        return defenders >= 4;
     }
 
     private List<LineupPlayerResponse> savePlayers(Lineup lineup, List<LineupPlayerRequest> players, Map<Long, TeamPlayer> teamPlayersById) {
