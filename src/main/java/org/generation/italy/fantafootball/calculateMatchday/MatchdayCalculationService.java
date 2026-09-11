@@ -1,13 +1,21 @@
 package org.generation.italy.fantafootball.calculateMatchday;
 
+import org.generation.italy.fantafootball.model.dto.TeamPlayerRatingResponse;
+import org.generation.italy.fantafootball.model.entities.LeagueMatch;
 import org.generation.italy.fantafootball.model.entities.Lineup;
 import org.generation.italy.fantafootball.model.entities.LineupPlayer;
 import org.generation.italy.fantafootball.model.entities.PlayerResult;
+import org.generation.italy.fantafootball.model.entities.Team;
+import org.generation.italy.fantafootball.model.entities.TeamPlayer;
+import org.generation.italy.fantafootball.model.repositories.LeagueMatchRepository;
 import org.generation.italy.fantafootball.model.repositories.LineupRepository;
 import org.generation.italy.fantafootball.model.repositories.PlayerResultRepository;
+import org.generation.italy.fantafootball.model.repositories.TeamPlayerRepository;
+import org.generation.italy.fantafootball.model.repositories.TeamRepository;
 import org.generation.italy.fantafootball.model.exceptions.BadRequestException;
 import org.generation.italy.fantafootball.model.exceptions.ConflictException;
 import org.generation.italy.fantafootball.model.exceptions.NotFoundException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,14 +31,23 @@ public class MatchdayCalculationService {
 
     private final LineupRepository lineupRepository;
     private final PlayerResultRepository playerResultRepository;
+    private final TeamRepository teamRepository;
+    private final TeamPlayerRepository teamPlayerRepository;
+    private final LeagueMatchRepository leagueMatchRepository;
     private final TeamMatchStats teamMatchStats = new TeamMatchStats();
 
     public MatchdayCalculationService(
             LineupRepository lineupRepository,
-            PlayerResultRepository playerResultRepository
+            PlayerResultRepository playerResultRepository,
+            TeamRepository teamRepository,
+            TeamPlayerRepository teamPlayerRepository,
+            LeagueMatchRepository leagueMatchRepository
     ) {
         this.lineupRepository = lineupRepository;
         this.playerResultRepository = playerResultRepository;
+        this.teamRepository = teamRepository;
+        this.teamPlayerRepository = teamPlayerRepository;
+        this.leagueMatchRepository = leagueMatchRepository;
     }
 
     @Transactional(readOnly = true)
@@ -104,6 +121,48 @@ public class MatchdayCalculationService {
                         "player_result_not_found",
                         "No result found for player " + playerId + " in matchday " + matchdayId));
         return PlayerMatchStats.calculateFantaRating(result);
+    }
+
+    // Fantavoto di TUTTA la rosa attiva di una squadra per la giornata di una sua partita di lega,
+    // non solo dei giocatori schierati in quella lineup: serve a confrontare chi ha reso meglio
+    // (anche chi e' rimasto in panchina o non e' mai stato messo in formazione), per decidere chi
+    // schierare alla prossima giornata. leagueMatchId (non matchdayId) perche' e' gia' l'identificativo
+    // che il frontend conosce dal calendario/dalla lineup — la matchday non e' esposta altrove.
+    // Un giocatore senza ancora un PlayerResult per quella giornata (non ha giocato, o la giornata
+    // non e' chiusa) compare comunque nella risposta con fantaRating = null, non viene escluso ne'
+    // fa fallire l'intera chiamata.
+    @Transactional(readOnly = true)
+    public List<TeamPlayerRatingResponse> calculateTeamRosterRatings(Long teamId, Long leagueMatchId, Long requestingUserId) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new NotFoundException("TEAM_NOT_FOUND", "Squadra non trovata: " + teamId));
+
+        boolean isOwner = team.getUser().getId().equals(requestingUserId);
+        boolean isLeagueAdmin = team.getLeague().getAdmin().getId().equals(requestingUserId);
+        if (!isOwner && !isLeagueAdmin) {
+            throw new AccessDeniedException("Solo il proprietario della squadra o l'admin della lega possono vedere questi voti");
+        }
+
+        LeagueMatch leagueMatch = leagueMatchRepository.findById(leagueMatchId)
+                .orElseThrow(() -> new NotFoundException("league_match_not_found", "Partita non trovata: " + leagueMatchId));
+
+        boolean teamPlaysMatch = Objects.equals(leagueMatch.getHomeTeam().getId(), teamId)
+                || Objects.equals(leagueMatch.getAwayTeam().getId(), teamId);
+        if (!teamPlaysMatch) {
+            throw new ConflictException("lineup_team_mismatch", "La squadra non gioca questa partita di lega");
+        }
+
+        Long matchdayId = leagueMatch.getMatchday().getId();
+        List<TeamPlayer> roster = teamPlayerRepository.findAllByTeamIdAndTransferDateIsNull(teamId);
+
+        return roster.stream()
+                .map(teamPlayer -> {
+                    Double fantaRating = playerResultRepository
+                            .findByPlayerIdAndMatchdayId(teamPlayer.getPlayer().getId(), matchdayId)
+                            .map(PlayerMatchStats::calculateFantaRating)
+                            .orElse(null);
+                    return TeamPlayerRatingResponse.of(teamPlayer, fantaRating);
+                })
+                .toList();
     }
 
     private Optional<PlayerMatchStats> toPlayedMatchStats(Lineup lineup, LineupPlayer lineupPlayer) {

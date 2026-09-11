@@ -1,5 +1,8 @@
 package org.generation.italy.fantafootball.calculateMatchday;
 
+import org.generation.italy.fantafootball.model.dto.TeamPlayerRatingResponse;
+import org.generation.italy.fantafootball.model.entities.AppUser;
+import org.generation.italy.fantafootball.model.entities.League;
 import org.generation.italy.fantafootball.model.entities.LeagueMatch;
 import org.generation.italy.fantafootball.model.entities.Lineup;
 import org.generation.italy.fantafootball.model.entities.LineupPlayer;
@@ -9,20 +12,27 @@ import org.generation.italy.fantafootball.model.entities.PlayerResult;
 import org.generation.italy.fantafootball.model.entities.PlayerRole;
 import org.generation.italy.fantafootball.model.entities.Team;
 import org.generation.italy.fantafootball.model.entities.TeamPlayer;
+import org.generation.italy.fantafootball.model.exceptions.ConflictException;
 import org.generation.italy.fantafootball.model.exceptions.NotFoundException;
+import org.generation.italy.fantafootball.model.repositories.LeagueMatchRepository;
 import org.generation.italy.fantafootball.model.repositories.LineupRepository;
 import org.generation.italy.fantafootball.model.repositories.PlayerResultRepository;
+import org.generation.italy.fantafootball.model.repositories.TeamPlayerRepository;
+import org.generation.italy.fantafootball.model.repositories.TeamRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
@@ -34,6 +44,12 @@ class MatchdayCalculationServiceTest {
     LineupRepository lineupRepository;
     @Mock
     PlayerResultRepository playerResultRepository;
+    @Mock
+    TeamRepository teamRepository;
+    @Mock
+    TeamPlayerRepository teamPlayerRepository;
+    @Mock
+    LeagueMatchRepository leagueMatchRepository;
     @InjectMocks
     MatchdayCalculationService calculationService;
 
@@ -78,6 +94,99 @@ class MatchdayCalculationServiceTest {
         assertEquals(6.5, calculationService.calculateLineupScore(10L));
     }
 
+    @Test
+    void calculateTeamRosterRatingsReturnsNullForPlayersWithoutAResultYet() {
+        AppUser owner = appUser(50L);
+        AppUser admin = appUser(60L);
+        League league = league(admin);
+        Team team = team(1L);
+        team.setUser(owner);
+        team.setLeague(league);
+        Team away = team(2L);
+        Matchday matchday = matchday(5L, true);
+        LeagueMatch leagueMatch = match(team, away, matchday);
+        setId(leagueMatch, 200L);
+
+        TeamPlayer scored = teamPlayer(11L, 101L, PlayerRole.D);
+        TeamPlayer benched = teamPlayer(12L, 102L, PlayerRole.C);
+
+        when(teamRepository.findById(1L)).thenReturn(Optional.of(team));
+        when(leagueMatchRepository.findById(200L)).thenReturn(Optional.of(leagueMatch));
+        when(teamPlayerRepository.findAllByTeamIdAndTransferDateIsNull(1L)).thenReturn(List.of(scored, benched));
+        when(playerResultRepository.findByPlayerIdAndMatchdayId(101L, 5L))
+                .thenReturn(Optional.of(playerResult("7.0")));
+        when(playerResultRepository.findByPlayerIdAndMatchdayId(102L, 5L))
+                .thenReturn(Optional.empty());
+
+        List<TeamPlayerRatingResponse> ratings = calculationService.calculateTeamRosterRatings(1L, 200L, owner.getId());
+
+        assertThat(ratings).hasSize(2);
+        assertThat(ratings).anySatisfy(r -> {
+            assertThat(r.playerId()).isEqualTo(101L);
+            assertThat(r.fantaRating()).isEqualTo(7.0);
+        });
+        assertThat(ratings).anySatisfy(r -> {
+            assertThat(r.playerId()).isEqualTo(102L);
+            assertThat(r.fantaRating()).isNull();
+        });
+    }
+
+    @Test
+    void calculateTeamRosterRatingsAllowsLeagueAdminEvenIfNotOwner() {
+        AppUser owner = appUser(50L);
+        AppUser admin = appUser(60L);
+        League league = league(admin);
+        Team team = team(1L);
+        team.setUser(owner);
+        team.setLeague(league);
+        Team away = team(2L);
+        Matchday matchday = matchday(5L, true);
+        LeagueMatch leagueMatch = match(team, away, matchday);
+        setId(leagueMatch, 200L);
+
+        when(teamRepository.findById(1L)).thenReturn(Optional.of(team));
+        when(leagueMatchRepository.findById(200L)).thenReturn(Optional.of(leagueMatch));
+        when(teamPlayerRepository.findAllByTeamIdAndTransferDateIsNull(1L)).thenReturn(List.of());
+
+        assertThat(calculationService.calculateTeamRosterRatings(1L, 200L, admin.getId())).isEmpty();
+    }
+
+    @Test
+    void calculateTeamRosterRatingsRejectsUserThatIsNeitherOwnerNorLeagueAdmin() {
+        AppUser owner = appUser(50L);
+        AppUser admin = appUser(60L);
+        League league = league(admin);
+        Team team = team(1L);
+        team.setUser(owner);
+        team.setLeague(league);
+
+        when(teamRepository.findById(1L)).thenReturn(Optional.of(team));
+
+        assertThrows(AccessDeniedException.class,
+                () -> calculationService.calculateTeamRosterRatings(1L, 200L, 999L));
+    }
+
+    @Test
+    void calculateTeamRosterRatingsRejectsTeamThatDoesNotPlayTheMatch() {
+        AppUser owner = appUser(50L);
+        AppUser admin = appUser(60L);
+        League league = league(admin);
+        Team team = team(1L);
+        team.setUser(owner);
+        team.setLeague(league);
+        Team home = team(2L);
+        Team away = team(3L);
+        Matchday matchday = matchday(5L, true);
+        LeagueMatch leagueMatch = match(home, away, matchday);
+        setId(leagueMatch, 200L);
+
+        when(teamRepository.findById(1L)).thenReturn(Optional.of(team));
+        when(leagueMatchRepository.findById(200L)).thenReturn(Optional.of(leagueMatch));
+
+        assertThrows(ConflictException.class,
+                () -> calculationService.calculateTeamRosterRatings(1L, 200L, owner.getId()));
+    }
+
     private static LeagueMatch match(Team home, Team away, Matchday matchday) {
         LeagueMatch match = new LeagueMatch();
         match.setHomeTeam(home);
@@ -97,6 +206,18 @@ class MatchdayCalculationServiceTest {
         Team team = new Team();
         setId(team, id);
         return team;
+    }
+
+    private static AppUser appUser(Long id) {
+        AppUser appUser = new AppUser();
+        setId(appUser, id);
+        return appUser;
+    }
+
+    private static League league(AppUser admin) {
+        League league = new League();
+        league.setAdmin(admin);
+        return league;
     }
 
     private static TeamPlayer teamPlayer(Long teamPlayerId, Long playerId, PlayerRole role) {

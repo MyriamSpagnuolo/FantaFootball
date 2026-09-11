@@ -3,6 +3,7 @@ package org.generation.italy.fantafootball.services;
 import org.generation.italy.fantafootball.model.dto.CreateLeagueRequest;
 import org.generation.italy.fantafootball.model.dto.LeagueResponse;
 import org.generation.italy.fantafootball.model.dto.PlayerResponse;
+import org.generation.italy.fantafootball.model.dto.PageResponse;
 import org.generation.italy.fantafootball.model.entities.AppUser;
 import org.generation.italy.fantafootball.model.entities.League;
 import org.generation.italy.fantafootball.model.exceptions.NotFoundException;
@@ -16,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-import java.util.List;
+import java.util.Locale;
 
 @Service
 public class LeagueService {
@@ -35,7 +36,8 @@ public class LeagueService {
     }
 
     @Transactional(readOnly = true)
-    public List<PlayerResponse> getAvailablePlayers(Long leagueId, Long requestingUserId) {
+    public PageResponse<PlayerResponse> getAvailablePlayers(Long leagueId, Long requestingUserId, int page, int size,
+                                                          String search) {
         League league = leagueRepository.findById(leagueId)
                 .orElseThrow(() -> new NotFoundException("LEAGUE_NOT_FOUND", "Lega non trovata: " + leagueId));
 
@@ -44,9 +46,13 @@ public class LeagueService {
             throw new AccessDeniedException("Devi far parte della lega per vedere i giocatori disponibili");
         }
 
-        return playerRepository.findAvailableByLeagueId(leagueId).stream()
-                .map(PlayerResponse::fromEntity)
-                .toList();
+        var pageable = PlayerPagination.of(page, size);
+        String normalizedSearch = search == null ? "" : search.strip().toLowerCase(Locale.ROOT);
+        // Escape the escape character first, then LIKE wildcards, so input stays literal.
+        String searchPattern = normalizedSearch.isEmpty() ? null : "%" + normalizedSearch
+                .replace("!", "!!").replace("%", "!%").replace("_", "!_") + "%";
+        return PageResponse.fromPage(playerRepository.findAvailableByLeagueId(leagueId, searchPattern, pageable)
+                .map(PlayerResponse::fromEntity));
     }
 
     @Transactional(readOnly = true)

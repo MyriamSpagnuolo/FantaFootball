@@ -6,10 +6,12 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.Optional;
+import java.util.List;
 
-public interface PlayerRepository extends JpaRepository<Player, Long>, JpaSpecificationExecutor<Player> {
+public interface PlayerRepository extends JpaRepository<Player, Long>, JpaSpecificationExecutor<Player>, PlayerAggregateRepository {
     @Query("""
             select p from Player p
             where not exists (
@@ -17,12 +19,26 @@ public interface PlayerRepository extends JpaRepository<Player, Long>, JpaSpecif
                 where tp.player = p and tp.league.id = :leagueId
                   and tp.transferDate is null
             )
-            order by p.id
+            and (:searchPattern is null
+                or lower(p.name) like :searchPattern escape '!'
+                or lower(p.surname) like :searchPattern escape '!'
+                or lower(concat(concat(p.name, ' '), p.surname)) like :searchPattern escape '!')
+            order by case p.role
+                when org.generation.italy.fantafootball.model.entities.PlayerRole.P then 0
+                when org.generation.italy.fantafootball.model.entities.PlayerRole.D then 1
+                when org.generation.italy.fantafootball.model.entities.PlayerRole.C then 2
+                when org.generation.italy.fantafootball.model.entities.PlayerRole.A then 3
+                else 4 end,
+                p.surname, p.name, p.id
             """)
-    List<Player> findAvailableByLeagueId(@Param("leagueId") Long leagueId);
+    Page<Player> findAvailableByLeagueId(@Param("leagueId") Long leagueId,
+                                       @Param("searchPattern") String searchPattern, Pageable pageable);
 
     Optional<Player> findByNameAndSurnameAndRealTeamNameAndRealTeamShirtNum(
             String name, String surname, String realTeamName, int realTeamShirtNum);
 
     Optional<Player> findByExternalId(Long externalId);
+
+    @Query("select distinct p.realTeamName from Player p where p.realTeamName is not null and trim(p.realTeamName) <> '' order by p.realTeamName")
+    List<String> findDistinctRealTeamNames();
 }

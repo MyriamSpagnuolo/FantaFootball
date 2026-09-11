@@ -46,6 +46,9 @@ public class LeagueSimMatchdayImportService {
     // cosi' un fallimento a meta' non lascia lo stato incoerente, e il prossimo giro di sync
     // ritentera' l'intera giornata da capo (findByNumber/findByPlayerIdAndMatchdayId sotto fanno
     // "trova o crea", quindi ripetere l'operazione e' sicuro: non si creano duplicati).
+    // NON calcola qui i punteggi dei league_match: quello e' compito di
+    // LeagueSimSyncService.syncMatchdays (richiamato ad OGNI giro per ogni giornata chiusa, non solo
+    // al momento della chiusura) — vedi il commento li' sul perche'.
     @Transactional
     public void importResults(LeagueSimMatchdayDto matchdayDto, List<LeagueSimPlayerResultDto> results) {
         Matchday matchday = matchdayRepository.findByNumber(matchdayDto.number())

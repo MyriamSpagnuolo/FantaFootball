@@ -1,5 +1,6 @@
 package org.generation.italy.fantafootball.integration.leaguesim;
 
+import org.generation.italy.fantafootball.calculateMatchday.LeagueMatchScoreService;
 import org.generation.italy.fantafootball.integration.leaguesim.dto.LeagueSimMatchdayDto;
 import org.generation.italy.fantafootball.integration.leaguesim.dto.LeagueSimPlayerDto;
 import org.generation.italy.fantafootball.integration.leaguesim.dto.LeagueSimPlayerResultDto;
@@ -42,12 +43,15 @@ class LeagueSimSyncServiceTest {
     private MatchdayRepository matchdayRepository;
     @Mock
     private LeagueSimMatchdayImportService matchdayImportService;
+    @Mock
+    private LeagueMatchScoreService leagueMatchScoreService;
 
     private LeagueSimSyncService syncService;
 
     @BeforeEach
     void setUp() {
-        syncService = new LeagueSimSyncService(client, playerRepository, matchdayRepository, matchdayImportService);
+        syncService = new LeagueSimSyncService(
+                client, playerRepository, matchdayRepository, matchdayImportService, leagueMatchScoreService);
     }
 
     // --- syncPlayers ---------------------------------------------------
@@ -126,13 +130,14 @@ class LeagueSimSyncServiceTest {
         assertThat(saved.getDate()).isEqualTo(LocalDate.of(2026, 3, 1));
         assertThat(saved.isClosed()).isFalse();
 
-        // Non essendo chiusa, non ci sono risultati da importare.
+        // Non essendo chiusa, non ci sono risultati da importare ne' punteggi da calcolare.
         verify(client, never()).fetchResults(anyInt());
         verifyNoInteractions(matchdayImportService);
+        verifyNoInteractions(leagueMatchScoreService);
     }
 
     @Test
-    void syncMatchdaysSkipsMatchdaysAlreadyImportedLocally() {
+    void syncMatchdaysSkipsReimportButStillTriesLeagueMatchScoresWhenAlreadyImportedLocally() {
         LeagueSimMatchdayDto closedDto = new LeagueSimMatchdayDto(3, LocalDate.of(2026, 3, 1), true);
         when(client.fetchMatchdays()).thenReturn(List.of(closedDto));
 
@@ -142,15 +147,30 @@ class LeagueSimSyncServiceTest {
 
         syncService.syncMatchdays();
 
+        // I risultati non vanno ri-scaricati/ri-importati: la giornata e' gia' chiusa in locale.
         verify(client, never()).fetchResults(anyInt());
         verifyNoInteractions(matchdayImportService);
+        // Ma il calcolo dei punteggi league_match va comunque ritentato ad ogni giro: e' idempotente
+        // (findAllByMatchdayIdAndHomeGoalsIsNull) e serve a coprire un league_match/lineup creato
+        // DOPO che la giornata era gia' chiusa — altrimenti quel punteggio non verrebbe mai calcolato.
+        verify(leagueMatchScoreService).calculateAndSaveResultsForMatchday(alreadyImported.getId());
     }
 
     @Test
-    void syncMatchdaysImportsNewlyClosedMatchday() {
+    void syncMatchdaysImportsNewlyClosedMatchdayAndThenCalculatesLeagueMatchScores() {
         LeagueSimMatchdayDto closedDto = new LeagueSimMatchdayDto(4, LocalDate.of(2026, 3, 8), true);
         when(client.fetchMatchdays()).thenReturn(List.of(closedDto));
-        when(matchdayRepository.findByNumber(4)).thenReturn(Optional.empty());
+
+        // syncMatchdays interroga matchdayRepository.findByNumber(4) tre volte in un giro:
+        // upsertMatchdayShell, poi isAlreadyImported (entrambe PRIMA dell'import: non esiste
+        // ancora in locale), poi il calcolo dei punteggi DOPO importResults (appena chiusa da
+        // matchdayImportService).
+        Matchday closedAfterImport = new Matchday(4, LocalDate.of(2026, 3, 8));
+        closedAfterImport.setClosed(true);
+        when(matchdayRepository.findByNumber(4))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(closedAfterImport));
 
         List<LeagueSimPlayerResultDto> results = List.of(
                 new LeagueSimPlayerResultDto(1L, BigDecimal.ONE, 0, 0, 0, 0, 0, 0, false, 0, false));
@@ -159,6 +179,20 @@ class LeagueSimSyncServiceTest {
         syncService.syncMatchdays();
 
         verify(matchdayImportService).importResults(closedDto, results);
+        verify(leagueMatchScoreService).calculateAndSaveResultsForMatchday(closedAfterImport.getId());
+    }
+
+    @Test
+    void syncMatchdaysDoesNotCalculateLeagueMatchScoresWhenResultsImportFails() {
+        LeagueSimMatchdayDto closedDto = new LeagueSimMatchdayDto(6, LocalDate.of(2026, 3, 22), true);
+        when(client.fetchMatchdays()).thenReturn(List.of(closedDto));
+        when(matchdayRepository.findByNumber(6)).thenReturn(Optional.empty());
+        when(client.fetchResults(6)).thenThrow(new RuntimeException("boom"));
+
+        syncService.syncMatchdays();
+
+        // Senza risultati importati la giornata non risulta chiusa: non ha senso tentare il calcolo.
+        verifyNoInteractions(leagueMatchScoreService);
     }
 
     @Test

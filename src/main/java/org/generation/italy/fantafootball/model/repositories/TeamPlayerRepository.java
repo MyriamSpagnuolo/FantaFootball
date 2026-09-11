@@ -11,4 +11,12 @@ public interface TeamPlayerRepository extends JpaRepository<TeamPlayer,Long> {
     List<TeamPlayer> findAllByTeamId(Long teamId);
 
     boolean existsByPlayer_IdAndLeague_IdAndTransferDateIsNull(Long playerId, Long leagueId);
+
+    // Giocatori attivi (non ceduti) di una squadra, filtrati per id: usato per validare
+    // la formazione, cosi' non si puo' schierare un TeamPlayer di un'altra squadra o gia' svincolato.
+    List<TeamPlayer> findAllByIdInAndTeamIdAndTransferDateIsNull(List<Long> ids, Long teamId);
+
+    // Tutta la rosa attiva di una squadra (non filtrata per id): usato per mostrare il fantavoto
+    // di OGNI giocatore della rosa per una giornata, non solo di chi e' stato schierato in lineup.
+    List<TeamPlayer> findAllByTeamIdAndTransferDateIsNull(Long teamId);
 }

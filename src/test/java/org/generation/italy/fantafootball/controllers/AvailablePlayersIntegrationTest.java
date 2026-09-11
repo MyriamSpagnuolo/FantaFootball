@@ -5,6 +5,8 @@ import org.generation.italy.fantafootball.model.entities.*;
 import org.generation.italy.fantafootball.model.repositories.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -50,19 +52,19 @@ class AvailablePlayersIntegrationTest {
 
     @Test
     void emptyLeagueReturnsEntireCatalogWithPlayerResponseFields() throws Exception {
-        PlayerResponse expected = PlayerResponse.fromEntity(first);
+        PlayerResponse expected = PlayerResponse.fromEntity(second);
         mvc.perform(get(url()).with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].id").value(expected.id()))
-                .andExpect(jsonPath("$[0].externalId").value(expected.externalId()))
-                .andExpect(jsonPath("$[0].name").value(expected.name()))
-                .andExpect(jsonPath("$[0].surname").value(expected.surname()))
-                .andExpect(jsonPath("$[0].role").value(expected.role().name()))
-                .andExpect(jsonPath("$[0].realTeamName").value(expected.realTeamName()))
-                .andExpect(jsonPath("$[0].realTeamShirtNum").value(expected.realTeamShirtNum()))
-                .andExpect(jsonPath("$[0].price").value(expected.price()))
-                .andExpect(jsonPath("$[0].injured").value(expected.injured()));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].id").value(expected.id()))
+                .andExpect(jsonPath("$.content[0].externalId").value(expected.externalId()))
+                .andExpect(jsonPath("$.content[0].name").value(expected.name()))
+                .andExpect(jsonPath("$.content[0].surname").value(expected.surname()))
+                .andExpect(jsonPath("$.content[0].role").value(expected.role().name()))
+                .andExpect(jsonPath("$.content[0].realTeamName").value(expected.realTeamName()))
+                .andExpect(jsonPath("$.content[0].realTeamShirtNum").value(expected.realTeamShirtNum()))
+                .andExpect(jsonPath("$.content[0].price").value(expected.price()))
+                .andExpect(jsonPath("$.content[0].injured").value(expected.injured()));
     }
 
     @Test
@@ -71,8 +73,8 @@ class AvailablePlayersIntegrationTest {
         own(otherTeam, first);
         mvc.perform(get(url()).with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].id").value(second.getId()));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(second.getId()));
     }
 
     @Test
@@ -94,13 +96,13 @@ class AvailablePlayersIntegrationTest {
     void adminWithoutTeamHasAccess() throws Exception {
         mvc.perform(get(url()).with(jwt().jwt(j -> j.subject(admin.getUsername()).claim("tokenVersion", 0).claim("uid", admin.getId()))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2));
+                .andExpect(jsonPath("$.content.length()").value(2));
     }
 
     @Test
     void successfulPurchaseRemovesPlayerFromAvailableCatalog() throws Exception {
         mvc.perform(get(url()).with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
-                .andExpect(jsonPath("$.length()").value(2));
+                .andExpect(jsonPath("$.content.length()").value(2));
         mvc.perform(post("/api/leagues/{leagueId}/teams/{teamId}/players/{playerId}",
                         league.getId(), team.getId(), first.getId())
                         .with(jwt().jwt(j -> j.subject(admin.getUsername()).claim("tokenVersion", 0).claim("uid", admin.getId())))
@@ -108,8 +110,8 @@ class AvailablePlayersIntegrationTest {
                 .andExpect(status().is2xxSuccessful());
         mvc.perform(get(url()).with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].id").value(second.getId()));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(second.getId()));
     }
 
     @Test
@@ -120,7 +122,7 @@ class AvailablePlayersIntegrationTest {
         roster.saveAndFlush(historical);
         mvc.perform(get(url()).with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2));
+                .andExpect(jsonPath("$.content.length()").value(2));
     }
 
     @Test
@@ -129,11 +131,230 @@ class AvailablePlayersIntegrationTest {
         own(team, second);
         mvc.perform(get(url()).with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
                 .andExpect(status().isOk())
-                .andExpect(content().json("[]"));
+                .andExpect(jsonPath("$.content").isEmpty()).andExpect(jsonPath("$.totalElements").value(0));
     }
 
     private String url() {
         return "/api/leagues/" + league.getId() + "/players/available";
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "   ", "\t "})
+    void blankSearchReturnsEntireCatalog(String search) throws Exception {
+        search(search, 0, 20)
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.totalElements").value(2));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ari", "oss", "mArIo rOsSi", "  MARIO ROSSI  ", "io Ros"})
+    void searchesPartialNamesAndFullNameIgnoringCaseAndSurroundingSpaces(String search) throws Exception {
+        search(search, 0, 20)
+                .andExpect(jsonPath("$.content[0].id").value(first.getId()))
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    void searchFindsPlayerBeyondFirstUnfilteredPage() throws Exception {
+        for (long id = 103; id < 128; id++) {
+            players.save(new Player(id, "Nome", "Cognome", "Roma", 1, 10, false, PlayerRole.A));
+        }
+        Player target = players.save(new Player(128L, "Unico", "Bianchi", "Roma", 1, 10, false, PlayerRole.A));
+        search("bian", 0, 20)
+                .andExpect(jsonPath("$.content[0].id").value(target.getId()))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.hasNext").value(false));
+    }
+
+    @Test
+    void searchCombinesLeagueAvailabilityAndFilteredPagination() throws Exception {
+        Player third = players.save(new Player(103L, "Mario", "Rossi", "Roma", 1, 10, false, PlayerRole.A));
+        Player fourth = players.save(new Player(104L, "Mario", "Rossi", "Roma", 2, 10, false, PlayerRole.A));
+        own(team, first);
+        own(team(member, league("OTHER")), third);
+        for (int page = 0; page < 2; page++) {
+            search("mario", page, 1)
+                    .andExpect(jsonPath("$.content.length()").value(1))
+                    .andExpect(jsonPath("$.content[0].id").value(page == 0 ? third.getId() : fourth.getId()))
+                    .andExpect(jsonPath("$.page").value(page))
+                    .andExpect(jsonPath("$.size").value(1))
+                    .andExpect(jsonPath("$.totalElements").value(2))
+                    .andExpect(jsonPath("$.totalPages").value(2))
+                    .andExpect(jsonPath("$.hasNext").value(page == 0));
+        }
+        search("mario", 2, 1)
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.hasNext").value(false));
+    }
+
+    @Test
+    void noMatchReturnsZeroTotals() throws Exception {
+        search("inesistente", 0, 20)
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.totalPages").value(0))
+                .andExpect(jsonPath("$.hasNext").value(false));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"%", "_", "!", "\\", "!%_"})
+    void likeSpecialCharactersAreLiteral(String literal) throws Exception {
+        Player target = players.save(new Player(103L, "Special" + literal, "Test", "Roma", 1, 10, false, PlayerRole.A));
+        search(literal, 0, 20)
+                .andExpect(jsonPath("$.content[0].id").value(target.getId()))
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    void unauthenticatedSearchReturns401() throws Exception {
+        mvc.perform(get(url()).param("search", "Mario"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    private org.springframework.test.web.servlet.ResultActions search(String search, int page, int size) throws Exception {
+        return mvc.perform(get(url()).param("search", search)
+                        .param("page", Integer.toString(page)).param("size", Integer.toString(size))
+                        .with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void bothEndpointsReturnSeparatePagesAndTotals() throws Exception {
+        for (String endpoint : new String[]{"/api/players", url()}) {
+            mvc.perform(get(endpoint).param("page", "0").param("size", "1")
+                            .with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content.length()").value(1))
+                    .andExpect(jsonPath("$.content[0].id").value(second.getId()))
+                    .andExpect(jsonPath("$.page").value(0))
+                    .andExpect(jsonPath("$.size").value(1))
+                    .andExpect(jsonPath("$.totalElements").value(2))
+                    .andExpect(jsonPath("$.totalPages").value(2))
+                    .andExpect(jsonPath("$.hasNext").value(true));
+            mvc.perform(get(endpoint).param("page", "1").param("size", "1")
+                            .with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content.length()").value(1))
+                    .andExpect(jsonPath("$.content[0].id").value(first.getId()))
+                    .andExpect(jsonPath("$.page").value(1))
+                    .andExpect(jsonPath("$.totalElements").value(2))
+                    .andExpect(jsonPath("$.hasNext").value(false));
+        }
+    }
+
+    @Test
+    void bothEndpointsOrderAllRolesAndNamesBeforePagination() throws Exception {
+        Player defender = players.save(new Player(103L, "Zeno", "Zeta", "Roma", 1, 10, false, PlayerRole.D));
+        Player keeperZ = players.save(new Player(104L, "Zeno", "Zeta", "Roma", 1, 10, false, PlayerRole.P));
+        Player keeperB = players.save(new Player(105L, "Bruno", "Alfa", "Roma", 1, 10, false, PlayerRole.P));
+        Player keeperA = players.save(new Player(106L, "Andrea", "Alfa", "Roma", 1, 10, false, PlayerRole.P));
+        Player keeperTwin = players.save(new Player(107L, "Andrea", "Alfa", "Roma", 1, 10, false, PlayerRole.P));
+        Player[] expected = {keeperA, keeperTwin, keeperB, keeperZ, defender, second, first};
+        for (String endpoint : new String[]{"/api/players", url()}) {
+            for (int page = 0; page < expected.length; page++) {
+                mvc.perform(get(endpoint).param("page", Integer.toString(page)).param("size", "1")
+                                .with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.content.length()").value(1))
+                        .andExpect(jsonPath("$.content[0].id").value(expected[page].getId()))
+                        .andExpect(jsonPath("$.totalElements").value(expected.length));
+            }
+        }
+    }
+
+    @Test
+    void availableCountExcludesOwnedPlayersBeforePagination() throws Exception {
+        own(team, first);
+        mvc.perform(get(url()).param("size", "1")
+                        .with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(second.getId()))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.hasNext").value(false));
+    }
+
+    @Test
+    void catalogFiltersApplyBeforePaginationAndCounting() throws Exception {
+        Player filteredFirst = players.save(new Player(103L, "Paolo", "Neri", "Roma", 10, 25, false, PlayerRole.A));
+        mvc.perform(get("/api/players").param("role", "A").param("realTeamName", "Roma")
+                        .param("minPrice", "20").param("maxPrice", "25").param("injured", "false")
+                        .param("size", "1")
+                        .with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(filteredFirst.getId()))
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.totalPages").value(2));
+    }
+
+    @Test
+    void playerCatalogSearchAndFilteredTotalsAreAppliedBeforePagination() throws Exception {
+        for (long id = 103; id < 128; id++) {
+            players.save(new Player(id, "Altro", "Nome", "Roma", 1, 10, false, PlayerRole.A));
+        }
+        Player target = players.save(new Player(128L, "Mario", "Bianchi", "Inter", 1, 10, false, PlayerRole.D));
+        mvc.perform(get("/api/players").param("search", "  MARIO BIAN  ").param("size", "20")
+                        .with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(target.getId()))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1));
+    }
+
+    @Test
+    void playerCatalogSupportsRepeatedRolesTeamsAndInjuredFilter() throws Exception {
+        players.save(new Player(103L, "P", "One", "Inter", 1, 10, true, PlayerRole.P));
+        players.save(new Player(104L, "D", "Two", "Milan", 1, 10, false, PlayerRole.D));
+        players.save(new Player(105L, "C", "Three", "Roma", 1, 10, false, PlayerRole.C));
+        mvc.perform(get("/api/players").param("role", "P", "D").param("realTeamName", "Inter", "Milan")
+                        .param("injured", "false")
+                        .with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].role").value("D"));
+    }
+
+    @Test
+    void defaultsLimitResultsToTwentyPlayers() throws Exception {
+        for (long id = 103; id < 128; id++) {
+            players.save(new Player(id, "Nome", "Cognome", "Roma", 1, 10, false, PlayerRole.A));
+        }
+        for (String endpoint : new String[]{"/api/players", url()}) {
+            mvc.perform(get(endpoint)
+                            .with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content.length()").value(20))
+                    .andExpect(jsonPath("$.page").value(0))
+                    .andExpect(jsonPath("$.size").value(20))
+                    .andExpect(jsonPath("$.totalElements").value(27))
+                    .andExpect(jsonPath("$.hasNext").value(true));
+        }
+    }
+
+    @Test
+    void pageBeyondLastReturnsEmptyContentWithTotals() throws Exception {
+        for (String endpoint : new String[]{"/api/players", url()}) {
+            mvc.perform(get(endpoint).param("page", "5").param("size", "1")
+                            .with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content").isEmpty())
+                    .andExpect(jsonPath("$.totalElements").value(2))
+                    .andExpect(jsonPath("$.hasNext").value(false));
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"page=-1", "size=0", "size=-1", "size=101", "page=abc", "size=abc", "page=2147483647&size=100"})
+    void invalidPaginationReturns400(String query) throws Exception {
+        for (String endpoint : new String[]{"/api/players", url()}) {
+            mvc.perform(get(endpoint + "?" + query)
+                            .with(jwt().jwt(j -> j.subject(member.getUsername()).claim("tokenVersion", 0).claim("uid", member.getId()))))
+                    .andExpect(status().isBadRequest());
+        }
     }
 
     private AppUser user(String name) {
