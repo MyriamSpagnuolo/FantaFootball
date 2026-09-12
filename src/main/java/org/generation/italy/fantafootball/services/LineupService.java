@@ -83,10 +83,10 @@ public class LineupService {
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new NotFoundException("TEAM_NOT_FOUND", "Squadra non trovata: " + teamId));
 
-        boolean isOwner = team.getUser().getId().equals(requestingUserId);
+        boolean isLeagueMember = teamRepository.existsByUserIdAndLeagueId(requestingUserId, team.getLeague().getId());
         boolean isLeagueAdmin = team.getLeague().getAdmin().getId().equals(requestingUserId);
-        if (!isOwner && !isLeagueAdmin) {
-            throw new AccessDeniedException("Solo il proprietario della squadra o l'admin della lega possono vedere questa formazione");
+        if (!isLeagueMember && !isLeagueAdmin) {
+            throw new AccessDeniedException("Solo un membro di questa lega può vedere questa formazione");
         }
 
         Lineup lineup = lineupRepository.findByTeamIdAndLeagueMatchId(teamId, leagueMatchId)

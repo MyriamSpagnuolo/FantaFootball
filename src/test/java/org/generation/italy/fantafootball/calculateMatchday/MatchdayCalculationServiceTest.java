@@ -111,6 +111,7 @@ class MatchdayCalculationServiceTest {
         TeamPlayer benched = teamPlayer(12L, 102L, PlayerRole.C);
 
         when(teamRepository.findById(1L)).thenReturn(Optional.of(team));
+        when(teamRepository.existsByUserIdAndLeagueId(owner.getId(), league.getId())).thenReturn(true);
         when(leagueMatchRepository.findById(200L)).thenReturn(Optional.of(leagueMatch));
         when(teamPlayerRepository.findAllByTeamIdAndTransferDateIsNull(1L)).thenReturn(List.of(scored, benched));
         when(playerResultRepository.findByPlayerIdAndMatchdayId(101L, 5L))
@@ -181,6 +182,7 @@ class MatchdayCalculationServiceTest {
         setId(leagueMatch, 200L);
 
         when(teamRepository.findById(1L)).thenReturn(Optional.of(team));
+        when(teamRepository.existsByUserIdAndLeagueId(owner.getId(), league.getId())).thenReturn(true);
         when(leagueMatchRepository.findById(200L)).thenReturn(Optional.of(leagueMatch));
 
         assertThrows(ConflictException.class,

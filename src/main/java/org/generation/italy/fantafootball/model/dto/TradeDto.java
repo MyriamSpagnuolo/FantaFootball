@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 
 public record TradeDto(
         long id,
+        long leagueId,
+        String leagueName,
         long proposingTeamId,
         String proposingTeamName,
         long receivingTeamId,
@@ -20,6 +22,8 @@ public record TradeDto(
     public static TradeDto fromEntity(Trade trade) {
         return new TradeDto(
                 trade.getId(),
+                trade.getProposingTeam().getLeague().getId(),
+                trade.getProposingTeam().getLeague().getName(),
                 trade.getProposingTeam().getId(),
                 trade.getProposingTeam().getName() ,
                 trade.getReceivingTeam().getId(),
