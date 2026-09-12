@@ -165,6 +165,8 @@ public class MatchdayCalculationService {
                 .toList();
     }
 
+
+
     private Optional<PlayerMatchStats> toPlayedMatchStats(Lineup lineup, LineupPlayer lineupPlayer) {
         var player = lineupPlayer.getTeamPlayer();
         Optional<PlayerResult> result = playerResultRepository

@@ -1,5 +1,7 @@
 package org.generation.italy.fantafootball.services;
 
+import org.generation.italy.fantafootball.calculateMatchday.PlayerMatchStats;
+import org.generation.italy.fantafootball.model.repositories.PlayerResultRepository;
 import org.generation.italy.fantafootball.model.dto.CreateTeamRequest;
 import org.generation.italy.fantafootball.model.dto.RenameTeamRequest;
 import org.generation.italy.fantafootball.model.dto.TeamPlayerResponse;
@@ -19,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.Optional;
 
 @Service
@@ -29,17 +33,20 @@ public class TeamService {
     private final AppUserRepository appUserRepository;
     private final LeagueRepository leagueRepository;
     private final LeagueInviteRepository leagueInviteRepository;
+    private final PlayerResultRepository playerResultRepository;
 
     public TeamService(TeamRepository teamRepository,
                        TeamPlayerRepository teamPlayerRepository,
                        AppUserRepository appUserRepository,
                        LeagueRepository leagueRepository,
-                       LeagueInviteRepository leagueInviteRepository) {
+                       LeagueInviteRepository leagueInviteRepository,
+                       PlayerResultRepository playerResultRepository) {
         this.teamRepository = teamRepository;
         this.teamPlayerRepository = teamPlayerRepository;
         this.appUserRepository = appUserRepository;
         this.leagueRepository = leagueRepository;
         this.leagueInviteRepository = leagueInviteRepository;
+        this.playerResultRepository = playerResultRepository;
     }
 
     @Transactional
@@ -148,9 +155,31 @@ public class TeamService {
                     "Squadra non trovata:" + teamId
             );
         }
-        return teamPlayerRepository.findAllByTeamId(teamId).stream()
-                .map(TeamPlayerResponse::fromEntity)
+        List<TeamPlayer> roster = teamPlayerRepository.findAllByTeamId(teamId);
+        if (roster.isEmpty()) {
+            return List.of();
+        }
+        List<Long> playerIds = roster.stream()
+                .map(teamPlayer -> teamPlayer.getPlayer().getId())
+                .distinct()
                 .toList();
+        Map<Long, List<PlayerResult>> resultsByPlayer = playerResultRepository.findAllByPlayerIdIn(playerIds)
+                .stream()
+                .collect(Collectors.groupingBy(result -> result.getPlayer().getId()));
+
+        return roster.stream()
+                .map(teamPlayer -> TeamPlayerResponse.fromEntity(teamPlayer, calculateFantaAverage(
+                        resultsByPlayer.getOrDefault(teamPlayer.getPlayer().getId(), List.of()))))
+                .toList();
+    }
+
+    private Double calculateFantaAverage(List<PlayerResult> results) {
+        var average = results.stream()
+                .filter(result -> result.getMatchday().isClosed())
+                .filter(result -> result.getRating() != null)
+                .mapToDouble(PlayerMatchStats::calculateFantaRating)
+                .average();
+        return average.isPresent() ? average.getAsDouble() : null;
     }
 
     public void removePlayerFromTeam(Long teamId, Long playerId, Long userId) {
