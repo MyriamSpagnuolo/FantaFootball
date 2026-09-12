@@ -1,5 +1,7 @@
 # LeagueSim — contesto per integrazione con il progetto Fantafootball
 
+> **Nota di aggiornamento — 12 settembre 2026:** questo è il contesto storico del servizio esterno LeagueSim, conservato per non perdere le informazioni originarie. Il riferimento aggiornato per l'intero backend è [CONTESTO_COMPLETO.md](CONTESTO_COMPLETO.md). Versioni, percorsi, seed, configurazioni e dettagli interni di LeagueSim riportati sotto non sono stati riverificati sul suo repository. Il contratto effettivamente consumato e il polling implementato in FantaFootball sono descritti nella sezione 10 del documento principale. FantaFootball non avvia la simulazione su LeagueSim.
+
 > Questo file è pensato per essere letto da un'altra sessione/agente che lavora
 > sul progetto "fantafootball" (fantacalcio), per capire cosa espone LeagueSim
 > e come collegarsi correttamente. Percorso di questo repo:
@@ -139,12 +141,15 @@ lato fantafootball) solo finché la `Matchday` reale collegata non risulta
 `closed` — dopo la chiusura il voto diventa calcolabile e la formazione si
 blocca.
 
-## Punti da chiarire quando si progetta l'integrazione
+## Decisioni di integrazione e questioni storiche
 
-- Come/quando fantafootball invoca `POST /api/admin/matchdays/{n}/simulate`
-  (schedulazione autonoma di LeagueSim vs. trigger esterno da fantafootball)
+- Risolto lato FantaFootball: non invoca `POST /api/admin/matchdays/{n}/simulate`.
+  Il suo scheduler legge periodicamente catalogo e giornate; l'avvio della
+  simulazione resta responsabilità del sistema esterno.
 - ~~Se fantafootball ha bisogno di un mapping stabile tra `Player.id` di
   LeagueSim e le proprie entità~~ — risolto: `Player.externalId` in
   fantafootball è l'`id` del `Player` LeagueSim, upsert per quella chiave (vedi
   sezione "Come fantafootball consuma questi dati" sopra)
-- Se serve un endpoint aggregato (es. classifica, storico) non ancora presente
+- La vecchia domanda sugli aggregati esterni non descrive API mancanti di
+  FantaFootball: calendario con risultati, squadre ordinate per punti e scambi
+  di lega sono già esposti dal backend locale; vedi il documento principale.
